@@ -1,9 +1,9 @@
 import { useState,type ChangeEvent, type FormEvent } from "react";
 import {Form, Button, FormGroup, FormLabel, FormControl} from "react-bootstrap"
-import ApiClient from "../../utlis/ApiClient";
+import ApiClient from "../../../utils/ApiClient";
 import {NavLink, useNavigate} from "react-router-dom";
 
-interface SignInForm {
+type SignInForm =  {
     email: string,
     password: string,
 }
@@ -17,12 +17,12 @@ function SignIn(){
     })
 
     const onHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const { name, value} = event.target
+        const { name, value} = event.target;
 
-        setform({
-            ...form,
+        setform((prev) => ({
+            ...prev,
             [name]: value
-        })
+        }))
     }
 
     const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -30,7 +30,7 @@ function SignIn(){
         setIsLoading(true)
 
         try{
-            const response = await ApiClient.post("/auth/signin", form)
+            const response = await ApiClient.post("/signin", form)
 
             console.log("Login response:", response.data)
 
@@ -45,11 +45,23 @@ function SignIn(){
                     })
                 }
             }
-        } catch ( error) {
-            console.log(error)
-            alert("Login gagal")
-        }finally{
-            setIsLoading(false)
+            setIsLoading(false);
+        } catch (error: any){
+            console.error("Signup error:", error)
+            
+            if (error.response) {
+                console.error("Response status:", error.response.status)
+                console.error("Response data:", error.response.data)
+                console.error("Response headers:", error.response.headers)
+                alert(`Signup Gagal: ${error.response.data?.message || error.response.statusText || "Unknown error"}`)
+            } else if (error.request) {
+                console.error("No response received:", error.request)
+                alert("Signup Gagal: Tidak ada respons dari server")
+            } else {
+                console.error("Error:", error.message)
+                alert("Signup Gagal: " + error.message)
+            }
+            setIsLoading(false);
         }
     }
     

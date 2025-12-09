@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button, Spinner, Alert } from "react-bootstrap";
-import ApiClient from "../../utlis/ApiClient";
+import ApiClient from "../../utils/ApiClient";
 import { useNavigate } from "react-router-dom";
 import AppNavbar from "../../components/layout/AppNavbar";
 
@@ -62,10 +62,11 @@ export default function GoalList() {
         {!loading && goals.length === 0 && <p>Tidak ada goals. Coba tambah satu.</p>}
 
         <Row>
-          {goals.map((g) => (
+          <div className="d-flex border rounded p-3 flex-wrap">
+              {goals.map((g) => (
             <Col md={4} key={g._id} className="mb-3">
-              <Card>
-                <Card.Body>
+              <div className="card col-3" >
+                <div className="card-body">
                   <Card.Title>{g.title}</Card.Title>
                   <Card.Text style={{ minHeight: 48 }}>{g.description}</Card.Text>
                   <div className="d-flex justify-content-between align-items-center">
@@ -76,10 +77,12 @@ export default function GoalList() {
                       </Button>
                     </div>
                   </div>
-                </Card.Body>
-              </Card>
+                </div>
+              </div>
             </Col>
           ))}
+          </div>
+        
         </Row>
       </Container>
     </>

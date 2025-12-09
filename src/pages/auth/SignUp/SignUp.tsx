@@ -1,17 +1,17 @@
 import { useState,type ChangeEvent, type FormEvent } from "react";
 import {Form, Button, FormGroup, FormLabel, FormControl} from "react-bootstrap"
-import ApiClient from "../../utlis/ApiClient";
+import ApiClient from "../../../utils/ApiClient";
 import {NavLink} from "react-router-dom";
 
 interface SignUpForm {
-    name: string,
+    username: string,
     email: string,
     password: string,
 }
 
 function SignUp() {
     const [form, setform] = useState<SignUpForm>({
-        name: "",
+        username: "",
         email: "",
         password: ""
     })
@@ -29,13 +29,25 @@ function SignUp() {
         event.preventDefault()
 
         try{
-            const response = await ApiClient.post("/auth/signup", form)
+            const response = await ApiClient.post("/signup", form)
 
             console.log("Signup response:", response.data)
             alert("Signup berhasil, silahkan login !")
-        } catch (error){
-            console.log(error)
-            alert("Signup Gagal !")
+        } catch (error: any){
+            console.error("Signup error:", error)
+            
+            if (error.response) {
+                console.error("Response status:", error.response.status)
+                console.error("Response data:", error.response.data)
+                console.error("Response headers:", error.response.headers)
+                alert(`Signup Gagal: ${error.response.data?.message || error.response.statusText || "Unknown error"}`)
+            } else if (error.request) {
+                console.error("No response received:", error.request)
+                alert("Signup Gagal: Tidak ada respons dari server")
+            } else {
+                console.error("Error:", error.message)
+                alert("Signup Gagal: " + error.message)
+            }
         }
     }
 
@@ -48,8 +60,8 @@ function SignUp() {
                     <FormLabel>Nama</FormLabel>
                     <FormControl
                         onChange={onHandleChange}
-                        value={form.name}
-                        name="name"
+                        value={form.username}
+                        name="username"
                         type="text"
                         placeholder="Nama Lengkap">
                     </FormControl>

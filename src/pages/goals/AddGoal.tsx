@@ -1,6 +1,6 @@
 import React, {  useState } from "react";
 import { Container, Button, Alert,Form } from "react-bootstrap";
-import ApiClient from "../../utlis/ApiClient";
+import ApiClient from "../../utils/ApiClient";
 import { useNavigate } from "react-router-dom";
 import AppNavbar from "../../components/layout/AppNavbar";
 

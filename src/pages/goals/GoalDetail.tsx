@@ -1,6 +1,6 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import ApiClient from "../../utlis/ApiClient";
+import ApiClient from "../../utils/ApiClient";
 import { Container, Card, Spinner, Alert, Button } from "react-bootstrap";
 import AppNavbar from "../../components/layout/AppNavbar";
 
