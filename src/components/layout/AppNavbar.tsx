@@ -14,19 +14,19 @@ export default function AppNavbar() {
     <Navbar bg="light" expand="lg" className="mb-3">
       <Container>
         <Navbar.Brand style={{ cursor: "pointer" }} onClick={() => navigate("/app/goals")}>
-          GoalSync
+          <strong>GoalSync</strong>
         </Navbar.Brand>
 
-        <Nav className="ms-auto">
+        <Nav className="ms-auto d-flex align-items-center gap-2">
           <Button
-            variant="outline-primary"
-            className="me-2"
+            variant="outline-light"
+            size="sm"
             onClick={() => navigate("/app/goals/add")}
           >
             Add Goal
           </Button>
 
-          <Button variant="danger" onClick={handleLogout}>
+          <Button variant="danger" size="sm" onClick={handleLogout}>
             Logout
           </Button>
         </Nav>

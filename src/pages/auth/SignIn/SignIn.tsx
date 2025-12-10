@@ -1,5 +1,5 @@
 import { useState,type ChangeEvent, type FormEvent } from "react";
-import {Form, Button, FormGroup, FormLabel, FormControl} from "react-bootstrap"
+import {Form, Button, Card, Spinner} from "react-bootstrap"
 import ApiClient from "../../../utils/ApiClient";
 import {NavLink, useNavigate} from "react-router-dom";
 
@@ -47,60 +47,77 @@ function SignIn(){
             }
             setIsLoading(false);
         } catch (error: any){
-            console.error("Signup error:", error)
+            console.error("Signin error:", error)
             
             if (error.response) {
                 console.error("Response status:", error.response.status)
                 console.error("Response data:", error.response.data)
                 console.error("Response headers:", error.response.headers)
-                alert(`Signup Gagal: ${error.response.data?.message || error.response.statusText || "Unknown error"}`)
+                alert(`Signin Gagal: ${error.response.data?.message || error.response.statusText || "Unknown error"}`)
             } else if (error.request) {
                 console.error("No response received:", error.request)
-                alert("Signup Gagal: Tidak ada respons dari server")
+                alert("Signin Gagal: Tidak ada respons dari server")
             } else {
                 console.error("Error:", error.message)
-                alert("Signup Gagal: " + error.message)
+                alert("Signin Gagal: " + error.message)
             }
             setIsLoading(false);
         }
     }
     
     return (
-        <div className="container mx-auto">
-            <h1>SIGN IN PAGE</h1>
+        <div className="page-center">
+            <Card className="auth-card shadow-sm">
+                <Card.Body>
+                    <h2 className="mb-2">Sign in to GoalSync</h2>
+                    <p className="text-muted small">Masukkan email & password Anda.</p>
 
-            <Form onSubmit={onSubmit}>
+                    <Form onSubmit={onSubmit} className="mt-3">
+                        <Form.Group className="mb-3" controlId="formemail">
+                        <Form.Label>Email</Form.Label>
+                        <Form.Control
+                            onChange={onHandleChange}
+                            value={form.email}
+                            name="email"
+                            type="email"
+                            placeholder="you@example.com"
+                            required
+                            autoComplete="username"
+                        />
+                        </Form.Group>
 
-                <FormGroup className="mb-3" controlId="formemail">
-                    <FormLabel>Email</FormLabel>
-                    <FormControl
-                        onChange={onHandleChange}
-                        value={form.email}
-                        name="email"
-                        type="email"
-                        placeholder="Email">
-                    </FormControl>
+                        <Form.Group className="mb-3" controlId="formpassword">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control
+                            onChange={onHandleChange}
+                            value={form.password}
+                            name="password"
+                            type="password"
+                            placeholder="Password"
+                            required
+                            autoComplete="current-password"
+                        />
+                        </Form.Group>
 
-                </FormGroup>
+                        <div className="d-flex align-items-center justify-content-between gap-2">
+                        <Button type="submit" variant="primary" disabled={isLoading}>
+                            {isLoading ? (
+                            <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                                {"  "}Loading...
+                            </>
+                            ) : (
+                            "Sign In"
+                            )}
+                        </Button>
 
-                <FormGroup className="mb-3" controlId="formpassword">
-                    <FormLabel>Password</FormLabel>
-                    <FormControl
-                        onChange={onHandleChange}
-                        value={form.password}
-                        name="password"
-                        type="password"
-                        placeholder="Password">
-                    </FormControl>
-
-                </FormGroup>
-
-                <Button type="submit" variant="primary" disabled={isLoading}>{isLoading ? "Loading..." : "Sign In"}</Button>
-
-                <NavLink to="/signup">Belum punya akun? Sign Up </NavLink>
-
-            </Form>
-
+                        <NavLink to="/signup" className="small">
+                            Belum punya akun? Sign Up
+                        </NavLink>
+                        </div>
+                    </Form>
+                </Card.Body>
+            </Card>
         </div>
     )
 

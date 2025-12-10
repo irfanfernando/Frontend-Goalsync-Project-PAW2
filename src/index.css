@@ -1,68 +1,63 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --bg: #121214;
+  --card: #1c1c1f;
+  --muted: #9aa3ad;
+  --accent: #5b6cff;
+  --text: #e6eef6;
+}
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+* { box-sizing: border-box; }
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+/* page helpers */
+.app-container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
 
-body {
-  margin: 0;
+/* center-auth form */
+.page-center {
   display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  min-height: calc(100vh - 80px);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.auth-card {
+  width: 100%;
+  max-width: 560px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 12px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+/* Headings */
+h1, h2, h3, h4 { margin: 0 0 8px 0; color: var(--text); }
+p { margin: 0 0 8px 0; color: var(--muted); }
+
+/* buttons tweak for consistency */
+.btn-primary {
+  background-color: var(--accent);
+  border-color: transparent;
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.btn-primary:hover, .btn-primary:focus {
+  filter: brightness(1.05);
+  background-color: #4a55e6;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* small helpers */
+.text-muted { color: var(--muted) !important; }
+.shadow-sm { box-shadow: 0 3px 10px rgba(0,0,0,0.45); }
+
+/* responsive */
+@media (max-width: 576px) {
+  .page-center { padding: 28px 12px; }
+  .auth-card { padding: 16px; }
 }

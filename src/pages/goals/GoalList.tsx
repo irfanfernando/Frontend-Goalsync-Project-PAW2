@@ -61,29 +61,31 @@ export default function GoalList() {
 
         {!loading && goals.length === 0 && <p>Tidak ada goals. Coba tambah satu.</p>}
 
-        <Row>
-          <div className="d-flex border rounded p-3 flex-wrap">
-              {goals.map((g) => (
-            <Col md={4} key={g._id} className="mb-3">
-              <div className="card col-3" >
-                <div className="card-body">
-                  <Card.Title>{g.title}</Card.Title>
-                  <Card.Text style={{ minHeight: 48 }}>{g.description}</Card.Text>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div>Progress: {g.progress ?? 0}%</div>
-                    <div>
-                      <Button variant="primary" size="sm" onClick={() => navigate(`/app/goals/${g._id}`)}>
-                        Buka
-                      </Button>
-                    </div>
+        <Row className="gy-4">
+          {goals.map((g) => (
+            <Col md={6} lg={4} key={g._id}>
+              <Card className="h-100 shadow-sm">
+                <Card.Body className="d-flex flex-column">
+                  <div className="mb-2">
+                    <Card.Title className="mb-0">{g.title}</Card.Title>
+                    <small className="text-muted">Progress: {g.progress ?? 0}%</small>
                   </div>
-                </div>
-              </div>
+                  <Card.Text className="flex-grow-1" style={{ minHeight: 48 }}>
+                    {g.description ?? <span className="text-muted">Tidak ada deskripsi</span>}
+                  </Card.Text>
+
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <Button variant="primary" size="sm" onClick={() => navigate(`/app/goals/${g._id}`)}>
+                      Buka
+                    </Button>
+                    <div className="text-muted small">ID: {g._id.slice(0, 8)}…</div>
+                  </div>
+                </Card.Body>
+              </Card>
             </Col>
           ))}
-          </div>
-        
         </Row>
+
       </Container>
     </>
   );
