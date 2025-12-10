@@ -80,7 +80,7 @@ function SignIn(){
                             value={form.email}
                             name="email"
                             type="email"
-                            placeholder="you@example.com"
+                            placeholder="Masukkan Email"
                             required
                             autoComplete="username"
                         />
@@ -93,7 +93,7 @@ function SignIn(){
                             value={form.password}
                             name="password"
                             type="password"
-                            placeholder="Password"
+                            placeholder="Masukkan Password"
                             required
                             autoComplete="current-password"
                         />

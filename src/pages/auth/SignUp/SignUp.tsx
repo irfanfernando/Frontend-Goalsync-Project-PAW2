@@ -1,7 +1,7 @@
 import { useState,type ChangeEvent, type FormEvent } from "react";
-import {Form, Button, FormGroup, FormLabel, FormControl} from "react-bootstrap"
+import {Form, Button, Card, Spinner} from "react-bootstrap"
 import ApiClient from "../../../utils/ApiClient";
-import {NavLink} from "react-router-dom";
+import {NavLink, useNavigate} from "react-router-dom";
 
 interface SignUpForm {
     username: string,
@@ -10,11 +10,13 @@ interface SignUpForm {
 }
 
 function SignUp() {
+    const navigate = useNavigate();
     const [form, setform] = useState<SignUpForm>({
         username: "",
         email: "",
         password: ""
     })
+    const [isLoading, setIsLoading] = useState(false);
 
     const onHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value} = event.target
@@ -27,12 +29,16 @@ function SignUp() {
 
     const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+        setIsLoading(true);
 
         try{
-            const response = await ApiClient.post("/signup", form)
+            const payload = { ...form, email: form.email.trim() };
+            const response = await ApiClient.post("/signup", payload)
 
             console.log("Signup response:", response.data)
             alert("Signup berhasil, silahkan login !")
+            //navigate ini dibuat agar setelah signup langsung diarahkan ke halaman signin
+            navigate("/signin", { replace: true });
         } catch (error: any){
             console.error("Signup error:", error)
             
@@ -52,52 +58,72 @@ function SignUp() {
     }
 
     return (
-        <div className="container mx-auto">
-            <h1>SIGN UP PAGE</h1>
+        <div className="page-center">
+            <Card className="auth-card shadow-sm">
+                <Card.Body>
+                    <h2 className="mb-2">Sign Up to GoalSync</h2>
+                    <p className="text-muted small">Masukkan Username, Email,dan Password Anda.</p>
 
-            <Form onSubmit={onSubmit}>
-                <FormGroup className="mb-3" controlId="formname">
-                    <FormLabel>Nama</FormLabel>
-                    <FormControl
-                        onChange={onHandleChange}
-                        value={form.username}
-                        name="username"
-                        type="text"
-                        placeholder="Nama Lengkap">
-                    </FormControl>
+                    <Form onSubmit={onSubmit} className="mt-3">
 
-                </FormGroup>
+                        <Form.Group className="mb-3" controlId="formusername">
+                        <Form.Label>Username</Form.Label>
+                        <Form.Control
+                            onChange={onHandleChange}
+                            value={form.username}
+                            name="username"
+                            type="text"
+                            placeholder="Masukkan Username"
+                            required
+                            autoComplete="name"
+                        />
+                        </Form.Group>
 
-                <FormGroup className="mb-3" controlId="formemail">
-                    <FormLabel>Email</FormLabel>
-                    <FormControl
-                        onChange={onHandleChange}
-                        value={form.email}
-                        name="email"
-                        type="email"
-                        placeholder="Email">
-                    </FormControl>
+                        <Form.Group className="mb-3" controlId="formemail">
+                        <Form.Label>Email</Form.Label>
+                        <Form.Control
+                            onChange={onHandleChange}
+                            value={form.email}
+                            name="email"
+                            type="email"
+                            placeholder="Masukkan Email"
+                            required
+                            autoComplete="email"
+                        />
+                        </Form.Group>
 
-                </FormGroup>
+                        <Form.Group className="mb-3" controlId="formpassword">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control
+                            onChange={onHandleChange}
+                            value={form.password}
+                            name="password"
+                            type="password"
+                            placeholder="Masukkan Password"
+                            required
+                            autoComplete="new-password"
+                        />
+                        </Form.Group>
 
-                <FormGroup className="mb-3" controlId="formpassword">
-                    <FormLabel>Password</FormLabel>
-                    <FormControl
-                        onChange={onHandleChange}
-                        value={form.password}
-                        name="password"
-                        type="password"
-                        placeholder="Password">
-                    </FormControl>
+                        <div className="d-flex align-items-center justify-content-between gap-2">
+                        <Button type="submit" variant="primary" disabled={isLoading}>
+                            {isLoading ? (
+                            <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                                {"  "}Loading...
+                            </>
+                            ) : (
+                            "Sign In"
+                            )}
+                        </Button>
 
-                </FormGroup>
-
-                <Button type="submit" variant="primary">Sign Up</Button>
-
-                <NavLink to="/signin">Sudah punya akun? Sign in </NavLink>
-
-            </Form>
-
+                        <NavLink to="/signin" className="small">
+                            Sudah punya akun? Sign In
+                        </NavLink>
+                        </div>
+                    </Form>
+                </Card.Body>
+            </Card>
         </div>
     )
 }
