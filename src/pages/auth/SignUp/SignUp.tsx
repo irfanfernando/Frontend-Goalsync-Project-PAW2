@@ -62,7 +62,7 @@ function SignUp() {
             <Card className="auth-card shadow-sm">
                 <Card.Body>
                     <h2 className="mb-2">Sign Up to GoalSync</h2>
-                    <p className="text-muted small">Masukkan Username, Email,dan Password Anda.</p>
+                    <p className="text-muted small">Masukkan Username, Email, dan Password Anda.</p>
 
                     <Form onSubmit={onSubmit} className="mt-3">
 
