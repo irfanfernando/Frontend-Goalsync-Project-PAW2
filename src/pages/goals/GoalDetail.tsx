@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
-import { Container, Card, Spinner, Alert, Button,ListGroup, ProgressBar, Modal, Form, InputGroup } from "react-bootstrap";
+import { Container, Card, Spinner, Alert, Button,ListGroup, ProgressBar, Modal, Form, InputGroup, Badge } from "react-bootstrap";
 import AppNavbar from "../../components/layout/AppNavbar";
 
 type ProgressItem = {
@@ -15,6 +15,7 @@ type Member = {
   userId?: string;
   name?: string;
   avatar: string;
+  role?: string;
 }
 
 export default function GoalDetail() {
@@ -24,17 +25,22 @@ export default function GoalDetail() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  //progress modal state
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [delta, setDelta] = useState<number>(0);
   const [note, setNote] = useState<string>("");
   const [submittingProgress, setSubmittingProgress] = useState(false);
 
+  // assign modal state
   const [showAssign, setShowAssign] = useState(false);
   const [users, setUsers] = useState<Array<{ _id: string; name?: string; email?: string }>>([]);
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
+
+  //debounce ref for search
+  const searchDebounceRef = useRef<number | null>(null);
 
   useEffect(() => {
     fetchGoal();
@@ -53,6 +59,20 @@ export default function GoalDetail() {
       setLoading(false);
     }
   }
+  
+  type GoalCalc = {
+    progress?: number;
+    currentValue?: number;
+    targetValue?: number;
+  };
+
+  const calcProgress = (g: GoalCalc) => {
+    if (typeof g?.progress === "number") return Math.min(100, Math.max(0, Math.round(g.progress)));
+    const current = Number(g?.currentValue ?? 0);
+    const target = Number(g?.targetValue ?? 100);
+    if (target <= 0) return 0;
+    return Math.min(100, Math.max(0, Math.round((current / target) * 100)));
+  };
 
   const progressList: ProgressItem[] =
     goal?.actions ?? goal?.action ?? goal?.progressList ?? goal?.progressItems ?? [];
@@ -91,19 +111,40 @@ export default function GoalDetail() {
     setShowAssign(true);
   };
 
+  useEffect(() => {
+    if (!query || query.trim() === "") {
+      setUsers([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    if (searchDebounceRef.current) {
+      window.clearTimeout(searchDebounceRef.current);
+    }
+    searchDebounceRef.current = window.setTimeout(() => {
+      (async () => {
+        try {
+          const res = await ApiClient.get("/users", { params: { q: query } });
+          const data = res.data?.data ?? res.data ?? [];
+          setUsers(Array.isArray(data) ? data : []);
+        } catch (error) {
+          console.error("Search users error", error);
+          setUsers([]);
+        } finally {
+          setSearching(false);
+        }
+      })();
+    }, 350);
+
+    return () => {
+      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current);
+    };
+  }, [query]);
+
  
   const handleSearchUsers = async (q = "") => {
-    setSearching(true);
-    try {
-      const res = await ApiClient.get("/users", { params: { q } });
-      const data = res.data?.data ?? res.data ?? [];
-      setUsers(Array.isArray(data) ? data : []);
-    }catch (error){
-      console.error(error);
-      setUsers([]);
-    }finally{
-      setSearching(false);
-    }
+    setQuery(q);
+    
   };
 
   const doAssign = async () => {
