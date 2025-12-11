@@ -59,7 +59,7 @@ export default function GoalDetail() {
       setLoading(false);
     }
   }
-  
+
   type GoalCalc = {
     progress?: number;
     currentValue?: number;
@@ -197,9 +197,16 @@ export default function GoalDetail() {
     <>
       <AppNavbar />
       <Container className="mt-3" style={{ maxWidth: 900 }}>
-        <Button variant="link" onClick={() => navigate(-1)}>
-          &larr; Kembali
-        </Button>
+        <Button
+        variant="outline-secondary"
+        className="mb-3"
+        onClick={() => navigate(-1)}
+        style={{ display: "flex", alignItems: "center", gap: "6px" }}
+      >
+        <span style={{ fontSize: "18px" }}>←</span>
+        <span>Back</span>
+      </Button>
+
 
         <Card className="shadow-sm">
           <Card.Body>
