@@ -113,7 +113,7 @@ function SignUp() {
                                 {"  "}Loading...
                             </>
                             ) : (
-                            "Sign In"
+                            "Sign Up"
                             )}
                         </Button>
 

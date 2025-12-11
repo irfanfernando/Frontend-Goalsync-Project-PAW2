@@ -9,6 +9,9 @@ type ProgressItem = {
   note?: string;
   value?: number;
   createdAt?: string;
+  // populated user object OR string id
+  userId?: string | { _id?: string; username?: string; email?: string; avatar?: string };
+  resultingValue?: number;
 };
 
 type Member = {
@@ -263,17 +266,48 @@ export default function GoalDetail() {
             <h6>Progress timeline</h6>
             {progressList.length === 0 && <p className="text-muted">Tidak ada progress.</p>}
             <ListGroup>
-              {progressList.map((p) => (
-                <ListGroup.Item key={p._id ?? Math.random()}>
-                  <div className="d-flex justify-content-between">
-                    <div>
-                      <div style={{ fontSize: 14 }}>{p.note}</div>
-                      <small className="text-muted">{p.value ? `+${p.value}%` : ""}</small>
+              {progressList.map((p) => {
+                // normalize actor: jika p.userId adalah string -> treat as unknown (belum populated)
+                const actor =
+                  p && typeof p.userId === "object" && p.userId !== null
+                    ? p.userId
+                    : { username: null, email: null, avatar: null };
+
+                const actorName = actor?.username ?? actor?.email ?? "Unknown user";
+                const avatarSrc =
+                  actor?.avatar ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(actorName)}&background=666&color=fff`;
+
+                return (
+                  <ListGroup.Item key={p._id ?? Math.random()}>
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        {/* Avatar actor */}
+                        <img
+                          src={avatarSrc}
+                          alt={actorName}
+                          style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }}
+                        />
+
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>{p.note ?? "-"}</div>
+
+                          <div className="text-muted small">
+                            {actorName}
+                            {" • "}
+                            {p.value ? `${p.value > 0 ? "+" : ""}${p.value}%` : ""}
+                            {typeof (p as any).resultingValue !== "undefined" ? ` • Now ${(p as any).resultingValue}%` : ""}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: 12, color: "#666" }}>
+                        {p.createdAt ? new Date(p.createdAt).toLocaleString() : ""}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: "#666" }}>{p.createdAt ? new Date(p.createdAt).toLocaleString() : ""}</div>
-                  </div>
-                </ListGroup.Item>
-              ))}
+                  </ListGroup.Item>
+                );
+              })}
             </ListGroup>
           </Card.Body>
         </Card>
