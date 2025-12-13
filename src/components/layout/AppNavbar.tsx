@@ -1,5 +1,5 @@
 //import React from "react";
-import { Navbar, Container, Nav, Button } from "react-bootstrap";
+import { Navbar, Container, Nav, Button, Image } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 import { useEffect, useState } from "react";
@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 export default function AppNavbar() {
   const navigate = useNavigate();
   const [me, setMe] = useState<any>(null);
+  
     useEffect(() => {
     (async () => {
       try {
@@ -33,7 +34,7 @@ export default function AppNavbar() {
           <Button
             variant="outline-primary" className="me-2 " 
             size="sm"
-            onClick={() => navigate("/app/goals/add")} onClick={() => navigate("/app/goals/add")}>
+            onClick={() => navigate("/app/goals/add")} >
            Add Goal
           </Button>
           {me ? (
@@ -61,11 +62,4 @@ export default function AppNavbar() {
   );
 }
 
-          <Button variant="danger" size="sm" onClick={handleLogout}>
-            Logout
-          </Button>
-        </Nav>
-      </Container>
-    </Navbar>
-  );
-}
+  
