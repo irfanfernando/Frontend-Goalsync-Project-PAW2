@@ -76,7 +76,14 @@ export default function ProfileEdit() {
             />
             <div>
               
-              <Form.Control type="file" accept="image/*" onChange={(e) =>setFile(e.target.files?.[0]?? null)}/>
+              <Form.Control
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const input = e.target as HTMLInputElement;
+                  setFile(input.files?.[0] ?? null);
+              }}
+            />
               <Form.Text className="text-muted">PNG/JPG/WEBP. Max 2MB. Akan di-resize 256×256.</Form.Text>
             </div>
           </div>
