@@ -49,14 +49,16 @@ export default function GoalDetail() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [showMember, setShowMember] = useState(false);
-
-  // task
+  // tasks
   const [newTask, setNewTask] = useState("");
 
   // timeline
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [editTimeline, setEditTimeline] = useState(false);
+
+  // members
+  const [showMember, setShowMember] = useState(false);
 
   /* ================= FETCH ================= */
 
@@ -67,7 +69,6 @@ export default function GoalDetail() {
       const data = res.data?.data ?? res.data;
       setGoal(data);
 
-      // sync timeline input
       setStartDate(data?.startDate ? data.startDate.slice(0, 10) : "");
       setEndDate(data?.endDate ? data.endDate.slice(0, 10) : "");
     } catch (err) {
@@ -106,39 +107,25 @@ export default function GoalDetail() {
 
   const handleAddTask = async () => {
     if (!newTask.trim()) return;
-
-    try {
-      await ApiClient.post(`/goals/${goal._id}/tasks`, {
-        title: newTask,
-      });
-      setNewTask("");
-      fetchGoal();
-    } catch (err) {
-      console.error("Add task failed", err);
-    }
+    await ApiClient.post(`/goals/${goal._id}/tasks`, { title: newTask });
+    setNewTask("");
+    fetchGoal();
   };
 
   const handleToggleTask = async (taskId: string) => {
-    try {
-      await ApiClient.patch(
-        `/goals/${goal._id}/tasks/${taskId}/toggle`
-      );
-      fetchGoal();
-    } catch (err) {
-      console.error("Toggle task failed", err);
-    }
+    await ApiClient.patch(
+      `/goals/${goal._id}/tasks/${taskId}/toggle`
+    );
+    fetchGoal();
   };
 
   const handleSaveTimeline = async () => {
-    try {
-      await ApiClient.patch(`/goals/${goal._id}/timeline`, {
-        startDate: startDate || null,
-        endDate: endDate || null,
-      });
-      fetchGoal();
-    } catch (err) {
-      console.error("Update timeline failed", err);
-    }
+    await ApiClient.patch(`/goals/${goal._id}/timeline`, {
+      startDate: startDate || null,
+      endDate: endDate || null,
+    });
+    setEditTimeline(false);
+    fetchGoal();
   };
 
   /* ================= RENDER ================= */
@@ -149,7 +136,7 @@ export default function GoalDetail() {
 
       <Container className="mt-4 mb-5" style={{ maxWidth: 900 }}>
         {/* ===== BREADCRUMB ===== */}
-        <Breadcrumb className="mb-3">
+        <Breadcrumb className="mb-2">
           <Breadcrumb.Item onClick={() => navigate("/app/goals")}>
             Goals
           </Breadcrumb.Item>
@@ -158,26 +145,90 @@ export default function GoalDetail() {
           </Breadcrumb.Item>
         </Breadcrumb>
 
-        <h2 className="mb-1">{goal.title}</h2>
-        <p className="text-muted">
-          {goal.description || "No description"}
-        </p>
+        {/* ===== HEADER ===== */}
+        <div className="mb-4">
+          <h2 className="mb-1">{goal.title}</h2>
+          <p className="text-muted mb-0">
+            {goal.description || "No description"}
+          </p>
+        </div>
+
+        {/* ===== TIMELINE ===== */}
+        <Card className="mb-4 border-0 bg-light">
+          <Card.Body>
+            <h6 className="mb-2">Timeline</h6>
+
+            {!editTimeline ? (
+              <>
+                <div className="text-muted small mb-2">
+                  {goal.startDate || goal.endDate
+                    ? `${goal.startDate?.slice(0, 10) || "—"} – ${
+                        goal.endDate?.slice(0, 10) || "—"
+                      }`
+                    : "No timeline set"}
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  onClick={() => setEditTimeline(true)}
+                >
+                  Edit timeline
+                </Button>
+              </>
+            ) : (
+              <>
+                <Form.Group className="mb-2">
+                  <Form.Label>Start</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>End</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                  />
+                </Form.Group>
+
+                <div className="d-flex gap-2">
+                  <Button size="sm" onClick={handleSaveTimeline}>
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setEditTimeline(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            )}
+          </Card.Body>
+        </Card>
 
         {/* ===== PROGRESS ===== */}
-        <ProgressBar
-          now={progress}
-          label={`${progress}%`}
-          className="mb-4"
-        />
+        <div className="mb-4">
+          <ProgressBar now={progress} style={{ height: 6 }} />
+          <div className="text-muted small mt-1">
+            {done} of {tasks.length} tasks completed
+          </div>
+        </div>
 
         {/* ===== TASKS ===== */}
-        <Card className="mb-4">
+        <Card className="mb-4 border-0">
           <Card.Body>
-            <h5 className="mb-3">Tasks</h5>
+            <h6 className="mb-3">Tasks</h6>
 
             {tasks.length === 0 && (
               <div className="text-muted small mb-3">
-                No tasks yet. Add tasks to start progress.
+                No tasks yet
               </div>
             )}
 
@@ -186,7 +237,7 @@ export default function GoalDetail() {
                 key={t._id}
                 type="checkbox"
                 className="mb-2"
-                checked={!!t.completed}
+                checked={t.completed}
                 onChange={() => handleToggleTask(t._id)}
                 label={
                   <span
@@ -203,110 +254,76 @@ export default function GoalDetail() {
               />
             ))}
 
-            {/* ADD TASK */}
-            <div className="d-flex gap-2 mt-3">
-              <Form.Control
-                size="sm"
-                placeholder="New task..."
-                value={newTask}
-                onChange={e => setNewTask(e.target.value)}
-              />
-              <Button size="sm" onClick={handleAddTask}>
-                Add
-              </Button>
-            </div>
+            <Form.Control
+              size="sm"
+              className="mt-3"
+              placeholder="Add a task and press Add"
+              value={newTask}
+              onChange={e => setNewTask(e.target.value)}
+            />
+
+            <Button
+              size="sm"
+              className="mt-2"
+              onClick={handleAddTask}
+            >
+              Add task
+            </Button>
           </Card.Body>
         </Card>
 
         {/* ===== MEMBERS ===== */}
-        <Card className="mb-4">
+        <Card className="mb-4 border-0">
           <Card.Body>
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="mb-0">Members</h5>
-              <Button
-                size="sm"
-                onClick={() => setShowMember(true)}
-              >
+              <h6 className="mb-0">Members</h6>
+              <Button size="sm" onClick={() => setShowMember(true)}>
                 Add member
               </Button>
             </div>
 
             {(!goal.members || goal.members.length === 0) && (
               <div className="text-muted small">
-                No members yet
+                No members assigned
               </div>
             )}
 
-            {goal.members?.map((m: Member, idx: number) => {
-              const initials = m.userId?.username
-                ? m.userId.username.slice(0, 2).toUpperCase()
-                : "??";
-
-              return (
+            {goal.members?.map((m, idx) => (
+              <div
+                key={m.userId?._id || idx}
+                className="d-flex align-items-center gap-2 mb-2"
+              >
                 <div
-                  key={m.userId?._id || idx}
-                  className="d-flex align-items-center gap-2 mb-2"
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    background: "#dee2e6",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      background: "#dee2e6",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {initials}
-                  </div>
-                  <div>
-                    <div>
-                      {m.userId?.username || "Unknown user"}
-                    </div>
-                    <small className="text-muted">
-                      {m.role || "member"}
-                    </small>
-                  </div>
+                  {m.userId?.username
+                    ? m.userId.username.slice(0, 2).toUpperCase()
+                    : "??"}
                 </div>
-              );
-            })}
+                <div className="small">
+                  {m.userId?.username || "Unknown user"}
+                </div>
+              </div>
+            ))}
           </Card.Body>
         </Card>
 
-        {/* ===== TIMELINE ===== */}
-        <Card>
-          <Card.Body>
-            <h5 className="mb-3">Timeline</h5>
-
-            <Form.Group className="mb-2">
-              <Form.Label>Start Date</Form.Label>
-              <Form.Control
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>End Date</Form.Label>
-              <Form.Control
-                type="date"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-              />
-            </Form.Group>
-
-            <Button size="sm" onClick={handleSaveTimeline}>
-              Save timeline
-            </Button>
-          </Card.Body>
-        </Card>
+        {/* ===== ACTIVITY PLACEHOLDER ===== */}
+        <div className="text-muted small">
+          Activity will appear here when changes happen.
+        </div>
       </Container>
 
-      {/* ===== MODAL ===== */}
       <AddMemberModal
         show={showMember}
         onHide={() => setShowMember(false)}
