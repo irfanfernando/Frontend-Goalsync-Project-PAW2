@@ -1,63 +1,29 @@
 :root {
-  --bg: #121214;
-  --card: #1c1c1f;
-  --muted: #9aa3ad;
-  --accent: #5b6cff;
-  --text: #e6eef6;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --text-main: #111827;
+  --text-muted: #6b7280;
 }
-
-* { box-sizing: border-box; }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-main);
+  background-color: #f9fafb;
 }
 
-/* page helpers */
-.app-container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
-
-/* center-auth form */
-.page-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 16px;
-  min-height: calc(100vh - 80px);
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 560px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.03);
-  border-radius: 12px;
-}
-
-/* Headings */
-h1, h2, h3, h4 { margin: 0 0 8px 0; color: var(--text); }
-p { margin: 0 0 8px 0; color: var(--muted); }
-
-/* buttons tweak for consistency */
 .btn-primary {
-  background-color: var(--accent);
+  background-color: var(--primary);
   border-color: transparent;
 }
-.btn-primary:hover, .btn-primary:focus {
-  filter: brightness(1.05);
-  background-color: #4a55e6;
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
 }
 
-/* small helpers */
-.text-muted { color: var(--muted) !important; }
-.shadow-sm { box-shadow: 0 3px 10px rgba(0,0,0,0.45); }
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
 
-/* responsive */
-@media (max-width: 576px) {
-  .page-center { padding: 28px 12px; }
-  .auth-card { padding: 16px; }
+a:hover {
+  text-decoration: underline;
 }

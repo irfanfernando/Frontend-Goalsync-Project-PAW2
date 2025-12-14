@@ -32,12 +32,7 @@ export default function AppNavbar() {
         </Navbar.Brand>
 
         <Nav className="ms-auto d-flex align-items-center gap-2">
-          <Button
-            variant="outline-primary" className="me-2 " 
-            size="sm"
-            onClick={() => navigate("/app/goals/add")} >
-           Add Goal
-          </Button>
+          
           {me ? (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/profile")}>

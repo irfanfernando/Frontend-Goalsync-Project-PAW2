@@ -1,421 +1,205 @@
-import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  Container,
+  Card,
+  Button,
+  ProgressBar,
+  Spinner,
+  Image,
+} from "react-bootstrap";
+import { useNavigate, useParams } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
-import { Container, Card, Spinner, Alert, Button,ListGroup, ProgressBar, Modal, Form, InputGroup, Badge } from "react-bootstrap";
 import AppNavbar from "../../components/layout/AppNavbar";
-
-type ProgressItem = {
-  _id?: string;
-  note?: string;
-  value?: number;
-  createdAt?: string;
-  // populated user object OR string id
-  userId?: string | { _id?: string; username?: string; email?: string; avatar?: string };
-  resultingValue?: number;
-};
-
-type Member = {
-  userId?: string;
-  name?: string;
-  avatar: string;
-  role?: string;
-}
+import UpdateProgressModal from "./UpdateProgressModal";
+import ChangeMemberModal from "./ChangeMemberModal";
 
 export default function GoalDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [goal, setGoal] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const [showProgress, setShowProgress] = useState(false);
+  const [showMemberModal, setShowMemberModal] = useState(false);
 
-  //progress modal state
-  const [showProgressModal, setShowProgressModal] = useState(false);
-  const [delta, setDelta] = useState<number>(0);
-  const [note, setNote] = useState<string>("");
-  const [submittingProgress, setSubmittingProgress] = useState(false);
-
-  // assign modal state
-  const [showAssign, setShowAssign] = useState(false);
-  const [users, setUsers] = useState<Array<{ _id: string; name?: string; email?: string }>>([]);
-  const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [assigning, setAssigning] = useState(false);
-
-  //debounce ref for search
-  const searchDebounceRef = useRef<number | null>(null);
+  const fetchGoal = async () => {
+    setLoading(true);
+    try {
+      const res = await ApiClient.get(`/goals/${id}`);
+      setGoal(res.data?.data ?? res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchGoal();
   }, [id]);
 
-  async function fetchGoal() {
-    setLoading(true);
-    setErr(null);
-    try {
-      const res = await ApiClient.get(`/goals/${id}`);
-      setGoal(res.data?.data ?? res.data);
-    } catch (error: any) {
-      console.error(error);
-      setErr(error?.response?.data?.message || error?.message || "Gagal memuat detail goal");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  type GoalCalc = {
-    progress?: number;
-    currentValue?: number;
-    targetValue?: number;
-  };
-
-  const calcProgress = (g: GoalCalc) => {
-    if (typeof g?.progress === "number") return Math.min(100, Math.max(0, Math.round(g.progress)));
-    const current = Number(g?.currentValue ?? 0);
-    const target = Number(g?.targetValue ?? 100);
-    if (target <= 0) return 0;
-    return Math.min(100, Math.max(0, Math.round((current / target) * 100)));
-  };
-
-  const progressList: ProgressItem[] =
-    goal?.actions ?? goal?.action ?? goal?.progressList ?? goal?.progressItems ?? [];
-
-  const OpenProgressModal = () => {
-    setDelta(0);
-    setNote("");
-    setShowProgressModal(true);
-  }
-
-  const submitProgress = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!id) return alert("Goal id tidak ada");
-    const numericDelta = Number(delta || 0);
-    if (isNaN(numericDelta)) return alert("Masukkan angka valid untuk progress");
-    setSubmittingProgress(true);
-    try {
-      await ApiClient.post(`/goals/${id}/progress`, {
-        delta: numericDelta,
-        note,
-      });
-      await fetchGoal();
-      setShowProgressModal(false);
-    } catch (error: any) {
-      console.error("Submit progress error:", error);
-      alert(error?.response?.data?.message || error?.message || "Gagal menambah progress");
-    } finally {
-      setSubmittingProgress(false);
-    }
-  };
-
-  const openAssign = () => {
-    setSelectedUser(null);
-    setUsers([]);
-    setQuery("");
-    setShowAssign(true);
-  };
-
-  useEffect(() => {
-    if (!query || query.trim() === "") {
-      setUsers([]);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
-    if (searchDebounceRef.current) {
-      window.clearTimeout(searchDebounceRef.current);
-    }
-    searchDebounceRef.current = window.setTimeout(() => {
-      (async () => {
-        try {
-          const res = await ApiClient.get("/users", { params: { q: query } });
-          const data = res.data?.data ?? res.data ?? [];
-          setUsers(Array.isArray(data) ? data : []);
-        } catch (error) {
-          console.error("Search users error", error);
-          setUsers([]);
-        } finally {
-          setSearching(false);
-        }
-      })();
-    }, 350);
-
-    return () => {
-      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current);
-    };
-  }, [query]);
-
- 
-  const handleSearchUsers = async (q = "") => {
-    setQuery(q);
-    
-  };
-
-  const doAssign = async () => {
-    if (!selectedUser) return alert("Pilih user dulu");
-    setAssigning(true);
-    try {
-      await ApiClient.post(`/goals/${id}/members`, { userId: selectedUser });
-      await fetchGoal();
-      setShowAssign(false);
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.response?.data?.message || "Gagal assign member");
-    } finally {
-      setAssigning(false);
-    }
-  };
-
   if (loading) {
     return (
       <>
         <AppNavbar />
-        <Container className="text-center mt-4">
-          <Spinner animation="border" />
-        </Container>
+        <div className="text-center my-5">
+          <Spinner />
+        </div>
       </>
     );
   }
 
-  if (err) {
-    return (
-      <>
-        <AppNavbar />
-        <Container className="mt-3">
-          <Alert variant="danger">{err}</Alert>
-        </Container>
-      </>
-    );
-  }
+  if (!goal) return null;
 
-  if (!goal) {
-    return (
-      <>
-        <AppNavbar />
-        <Container className="mt-3">Goal tidak ditemukan</Container>
-      </>
-    );
-  }
+  const progress = goal.progress ?? 0;
+
+  const progressText =
+    progress === 0
+      ? "Not started yet"
+      : progress === 100
+      ? "Completed"
+      : "You're making progress. Keep going.";
 
   return (
     <>
       <AppNavbar />
-      <Container className="mt-3" style={{ maxWidth: 900 }}>
-        <Button
-        variant="outline-secondary"
-        className="mb-3"
-        onClick={() => navigate(-1)}
-        style={{ display: "flex", alignItems: "center", gap: "6px" }}
-      >
-        <span style={{ fontSize: "18px" }}>←</span>
-        <span>Back</span>
-      </Button>
 
+      <Container className="mt-4 mb-5" style={{ maxWidth: 900 }}>
+        {/* BREADCRUMB */}
+        <div className="mb-3 text-muted small">
+          <span
+            style={{ cursor: "pointer", textDecoration: "underline" }}
+            onClick={() => navigate("/app/goals")}
+          >
+            Goals
+          </span>{" "}
+          / <strong>{goal.title}</strong>
+        </div>
 
-        <Card className="shadow-sm">
+        <Card style={{ borderRadius: 12 }}>
           <Card.Body>
-            <div className="d-flex justify-content-between align-items-start">
-              <div>
-                <h4>{goal.title}</h4>
-                <p className="text-muted">{goal.description}</p>
-              </div>
+            {/* TITLE */}
+            <h2 className="mb-1">{goal.title}</h2>
+            <div className="text-muted mb-4">
+              {goal.description || "No description provided."}
+            </div>
 
-              <div style={{ minWidth: 220 }}>
-                <div className="mb-2 text-muted small">Progress</div>
-                <ProgressBar now={goal.progress ?? 0} label={`${goal.progress ?? 0}%`} />
-                <div className="mt-2 d-flex gap-2 align-items-center">
-                  <div className="text-muted small">Members:</div>
-                  <div className="d-flex align-items-center">
-                    {(goal.members as Member[] | undefined) && goal.members.length > 0 ? (
-                      (goal.members as Member[]).map((m: Member, i: number) => (
-                        <img
-                          key={i}
-                          src={
-                            m.avatar ||
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || "U")}&background=666&color=fff`
-                          }
-                          alt={m.name}
-                          title={m.name}
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "50%",
-                            objectFit: "cover",
-                            marginLeft: i === 0 ? 0 : -8,
-                            border: "2px solid var(--bg)",
-                          }}
-                        />
-                      ))
-                    ) : (
-                      <small className="text-muted">No members</small>
-                    )}
-                  </div>
-                </div>
+            {/* TIMELINE */}
+            <div
+              className="mb-4 p-3"
+              style={{ background: "#f8f9fa", borderRadius: 8 }}
+            >
+              <div className="fw-semibold mb-2">Timeline</div>
 
-                <div className="mt-3 d-flex gap-2">
-                  <Button variant="outline-primary" size="sm" onClick={openAssign}>
-                    Assign Member
-                  </Button>
-                  <Button variant="primary" size="sm" onClick={OpenProgressModal}>
-                    Tambah Progress
-                  </Button>
+              {goal.startDate && goal.endDate ? (
+                <div className="small">
+                  📅{" "}
+                  {new Date(goal.startDate).toLocaleDateString()} →{" "}
+                  {new Date(goal.endDate).toLocaleDateString()}
                 </div>
-              </div>
+              ) : (
+                <div className="text-muted small">No timeline set</div>
+              )}
+
+              <Button
+                size="sm"
+                variant="outline-secondary"
+                className="mt-2"
+              >
+                Edit timeline
+              </Button>
+            </div>
+
+            {/* PROGRESS */}
+            <div
+              className="mb-4 p-3"
+              style={{ background: "#f8f9fa", borderRadius: 8 }}
+            >
+              <div className="fw-semibold mb-2">Progress</div>
+
+              <ProgressBar now={progress} label={`${progress}%`} />
+
+              <div className="text-muted small mt-2">{progressText}</div>
+
+              <Button
+                size="sm"
+                className="mt-2"
+                onClick={() => setShowProgress(true)}
+              >
+                Update progress
+              </Button>
             </div>
 
             <hr />
-            <h6>Progress timeline</h6>
-            {progressList.length === 0 && <p className="text-muted">Tidak ada progress.</p>}
-            <ListGroup>
-              {progressList.map((p) => {
-                // normalize actor: jika p.userId adalah string -> treat as unknown (belum populated)
-                const actor =
-                  p && typeof p.userId === "object" && p.userId !== null
-                    ? p.userId
-                    : { username: null, email: null, avatar: null };
 
-                const actorName = actor?.username ?? actor?.email ?? "Unknown user";
-                const avatarSrc =
-                  actor?.avatar ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(actorName)}&background=666&color=fff`;
+            {/* MEMBERS */}
+            <div className="mb-4">
+              <div className="fw-semibold mb-2">Members</div>
 
-                return (
-                  <ListGroup.Item key={p._id ?? Math.random()}>
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        {/* Avatar actor */}
-                        <img
-                          src={avatarSrc}
-                          alt={actorName}
-                          style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }}
-                        />
-
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 600 }}>{p.note ?? "-"}</div>
-
-                          <div className="text-muted small">
-                            {actorName}
-                            {" • "}
-                            {p.value ? `${p.value > 0 ? "+" : ""}${p.value}%` : ""}
-                            {typeof (p as any).resultingValue !== "undefined" ? ` • Now ${(p as any).resultingValue}%` : ""}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ fontSize: 12, color: "#666" }}>
-                        {p.createdAt ? new Date(p.createdAt).toLocaleString() : ""}
-                      </div>
+              <div className="d-flex gap-2 flex-wrap mb-2">
+                {goal.members?.length ? (
+                  goal.members.map((m: any) => (
+                    <div
+                      key={m.userId}
+                      className="d-flex align-items-center gap-2"
+                    >
+                      <Image
+                        roundedCircle
+                        width={32}
+                        height={32}
+                        src={
+                          m.avatar ??
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            m.name || "U"
+                          )}`
+                        }
+                      />
+                      <span className="small">{m.name}</span>
                     </div>
-                  </ListGroup.Item>
-                );
-              })}
-            </ListGroup>
+                  ))
+                ) : (
+                  <span className="text-muted small">
+                    No members assigned
+                  </span>
+                )}
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline-secondary"
+                onClick={() => setShowMemberModal(true)}
+              >
+                + Add / Change member
+              </Button>
+            </div>
+
+            <hr />
+
+            {/* ACTIVITY */}
+            <div>
+              <div className="fw-semibold mb-2">Activity</div>
+              <div className="text-muted small">
+                Activity will appear here when progress or members change.
+              </div>
+            </div>
           </Card.Body>
         </Card>
       </Container>
 
-      {/* Progress Modal */}
-      <Modal show={showProgressModal} onHide={() => setShowProgressModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Tambah Progress</Modal.Title>
-        </Modal.Header>
-        <Form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submitProgress();
-          }}
-        >
-          <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Nilai (delta %)</Form.Label>
-              <Form.Control
-                type="number"
-                value={delta}
-                onChange={(e) => setDelta(Number(e.target.value))}
-                min={-100}
-                max={100}
-                step={1}
-                required
-              />
-              <Form.Text className="text-muted">Masukkan nilai penambahan progress (contoh: 10)</Form.Text>
-            </Form.Group>
+      {/* MODALS */}
+      <UpdateProgressModal
+        show={showProgress}
+        onHide={() => setShowProgress(false)}
+        goal={goal}
+        onUpdated={fetchGoal}
+      />
 
-            <Form.Group className="mb-3">
-              <Form.Label>Catatan (opsional)</Form.Label>
-              <Form.Control value={note} onChange={(e) => setNote(e.target.value)} as="textarea" rows={3} />
-            </Form.Group>
-          </Modal.Body>
-
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowProgressModal(false)}>
-              Batal
-            </Button>
-            <Button type="submit" variant="primary" disabled={submittingProgress}>
-              {submittingProgress ? (
-                <>
-                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />{" "}
-                  Menyimpan...
-                </>
-              ) : (
-                "Simpan"
-              )}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
-
-      {/* Assign Member Modal */}
-      <Modal show={showAssign} onHide={() => setShowAssign(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Assign Member</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form
-            onSubmit={(e) => {
-              e.preventDefault();
-              doAssign();
-            }}
-          >
-            <Form.Label>Search user</Form.Label>
-            <InputGroup className="mb-2">
-              <Form.Control placeholder="Cari nama atau email..." value={query} onChange={(e) => setQuery(e.target.value)} />
-              <Button variant="outline-secondary" onClick={() => handleSearchUsers(query)} disabled={searching}>
-                {searching ? "Mencari..." : "Cari"}
-              </Button>
-            </InputGroup>
-
-            <div style={{ maxHeight: 240, overflowY: "auto" }}>
-              {users.length === 0 && <div className="text-muted small">Tidak ada user (coba cari)</div>}
-              {users.map((u) => (
-                <div
-                  key={u._id}
-                  className={`d-flex align-items-center p-2 ${selectedUser === u._id ? "bg-light" : ""}`}
-                  style={{ cursor: "pointer", gap: 12 }}
-                  onClick={() => setSelectedUser(u._id)}
-                >
-                  <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || u.email || "U")}&background=666&color=fff`}
-                    alt={u.name}
-                    style={{ width: 36, height: 36, borderRadius: "50%" }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{u.name ?? u.email}</div>
-                    <div className="text-muted small">{u.email}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-3 d-flex justify-content-end gap-2">
-              <Button variant="secondary" onClick={() => setShowAssign(false)}>
-                Batal
-              </Button>
-              <Button type="submit" variant="primary" disabled={assigning || !selectedUser}>
-                {assigning ? "Assigning..." : "Assign"}
-              </Button>
-            </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
+      <ChangeMemberModal
+        show={showMemberModal}
+        onHide={() => setShowMemberModal(false)}
+        goal={goal}
+        onUpdated={fetchGoal}
+      />
     </>
   );
 }
