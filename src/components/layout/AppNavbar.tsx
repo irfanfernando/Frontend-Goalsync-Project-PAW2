@@ -1,61 +1,88 @@
-//import React from "react";
-import { Navbar, Container, Nav, Button, Image } from "react-bootstrap";
+import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import ApiClient from "../../utils/ApiClient";
-import { useEffect, useState } from "react";
 
 export default function AppNavbar() {
   const navigate = useNavigate();
-  const [me, setMe] = useState<any>(null);
-  
-    useEffect(() => {
-    (async () => {
-      try {
-        const res = await ApiClient.get("/me");
-        setMe(res.data?.data);
-      } catch (err) {
-        console.error("get /me error", err);
-      }
-    })();
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("AuthToken");
-    navigate("/signin", { replace: true });
+    navigate("/signin");
   };
 
   return (
-    <Navbar bg="light" expand="lg" className="mb-3">
-      <Container>
-        <Navbar.Brand style={{ cursor: "pointer" }} onClick={() => navigate("/app/goals")}>
+    <Navbar
+      bg="white"
+      expand="lg"
+      className="border-bottom"
+      style={{ height: 64 }}
+    >
+      <Container fluid style={{ maxWidth: 1200 }}>
+        {/* BRAND */}
+        <Navbar.Brand
+          style={{ fontWeight: 600, fontSize: 18, cursor: "pointer" }}
+          onClick={() => navigate("/app/goals")}
+        >
           GoalSync
         </Navbar.Brand>
 
-        <Nav className="ms-auto d-flex align-items-center gap-2">
-          
-          {me ? (
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate("/profile")}>
-                <Image
-                  src={me.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(me.username ?? "U")}`}
-                  width={36}
-                  height={36}
-                  roundedCircle
-                  style={{ objectFit: "cover", border: "1px solid rgba(0,0,0,0.06)" }}
-                />
-                <div style={{ fontSize: 14 }}>{me.username}</div>
+        <Nav className="ms-auto align-items-center">
+          {/* PROFILE DROPDOWN */}
+          <Dropdown align="end">
+            <Dropdown.Toggle
+              variant="light"
+              id="profile-dropdown"
+              className="d-flex align-items-center gap-2 border-0 bg-transparent"
+            >
+              {/* Avatar */}
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  backgroundColor: "#e5e7eb",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 600,
+                  color: "#374151",
+                }}
+              >
+                TE
               </div>
-              <Button variant="danger" onClick={handleLogout}>Logout</Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline-secondary" onClick={() => navigate("/signin")}>Sign In</Button>
-            </>
-          )}
+
+              {/* Username */}
+              <span
+                className="d-none d-md-inline"
+                style={{ fontSize: 14, fontWeight: 500 }}
+              >
+                testadmin
+              </span>
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+              <Dropdown.Item disabled style={{ fontSize: 13 }}>
+                Signed in as <br />
+                <strong>testadmin</strong>
+              </Dropdown.Item>
+
+              <Dropdown.Divider />
+
+              <Dropdown.Item onClick={() => navigate("/app/profile")}>
+                Profile
+              </Dropdown.Item>
+
+              <Dropdown.Divider />
+
+              <Dropdown.Item
+                onClick={handleLogout}
+                style={{ color: "#dc2626", fontWeight: 500 }}
+              >
+                Logout
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
         </Nav>
       </Container>
     </Navbar>
   );
 }
-
-  

@@ -1,29 +1,120 @@
-:root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --text-main: #111827;
-  --text-muted: #6b7280;
+/* =========================
+   GoalDetail – Notion Style
+   STEP B.5
+   ========================= */
+
+/* Page container */
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
 }
 
-body {
-  color: var(--text-main);
-  background-color: #f9fafb;
+/* Header */
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 6px;
 }
 
-.btn-primary {
-  background-color: var(--primary);
-  border-color: transparent;
+.page-header p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
 }
 
-.btn-primary:hover {
-  background-color: var(--primary-hover);
+/* Soft card (main blocks) */
+.soft-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-a {
-  color: var(--primary);
-  text-decoration: none;
+/* Right side cards */
+.side-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-a:hover {
-  text-decoration: underline;
+/* Section titles */
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.section-muted {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Progress bar */
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background-color: #e5e7eb;
+}
+
+.progress-bar {
+  border-radius: 999px;
+}
+
+/* Tasks */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 2px;
+  font-size: 14px;
+}
+
+.task-item input {
+  transform: scale(1.05);
+}
+
+.task-item.completed {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+/* Task input */
+.task-input {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.task-input input {
+  border-radius: 10px;
+}
+
+/* Members */
+.member-item {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+/* Activity */
+.activity-item {
+  font-size: 13px;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 10px;
+  font-size: 14px;
+  padding: 6px 14px;
+}
+
+/* Responsive fix */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 20px 16px 48px;
+  }
 }

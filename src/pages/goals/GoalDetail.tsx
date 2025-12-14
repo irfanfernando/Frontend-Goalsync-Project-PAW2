@@ -203,15 +203,17 @@ export default function GoalDetail() {
             <Card className="border-0 shadow-sm">
               <Card.Body>
                 <h6 className="fw-semibold mb-2">Activity</h6>
-                <div
-                  className="text-muted small"
-                  style={{
-                    maxHeight: 200,
-                    overflowY: "auto",
-                  }}
-                >
-                  Activity will appear here when changes happen.
-                </div>
+                {goal.actions?.length === 0 && (
+                  <div className="text-muted small">
+                    No activity yet.
+                  </div>
+                )}
+
+                {goal.actions?.map((a: any, i: number) => (
+                  <div key={i} className="small mb-1">
+                    • {a.note}
+                  </div>
+                ))}
               </Card.Body>
             </Card>
           </Col>
