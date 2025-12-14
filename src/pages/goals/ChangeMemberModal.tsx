@@ -1,30 +1,65 @@
 import { useEffect, useState } from "react";
-import { Modal, Button, Form, Image } from "react-bootstrap";
+import { Modal, Button, Spinner } from "react-bootstrap";
 import ApiClient from "../../utils/ApiClient";
+
+type User = {
+  _id: string;
+  name?: string;
+  email: string;
+  avatar?: string;
+};
+
+type Props = {
+  show: boolean;
+  onHide: () => void;
+  goal: any;
+  onUpdated: () => void;
+};
 
 export default function ChangeMemberModal({
   show,
   onHide,
   goal,
   onUpdated,
-}: any) {
-  const [users, setUsers] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState("");
+}: Props) {
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!show) return;
-    ApiClient.get("/users").then((res) => {
-      setUsers(res.data?.data ?? res.data);
-    });
+
+    (async () => {
+      try {
+        const res = await ApiClient.get("/users");
+        setUsers(res.data?.data || []);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
   }, [show]);
 
-  const addMember = async () => {
-    if (!selectedUser) return;
-    await ApiClient.post(`/goals/${goal._id}/members`, {
-      userId: selectedUser,
-    });
-    onUpdated();
-    onHide();
+  const handleAddMember = async () => {
+    if (!selectedUserId) return;
+
+    setLoading(true);
+    try {
+      await ApiClient.post(`/goals/${goal._id}/members`, {
+        userId: selectedUserId,
+      });
+      onUpdated();
+      onHide();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitial = (name?: string, email?: string) => {
+    if (name) return name[0].toUpperCase();
+    if (email) return email[0].toUpperCase();
+    return "U";
   };
 
   return (
@@ -34,63 +69,61 @@ export default function ChangeMemberModal({
       </Modal.Header>
 
       <Modal.Body>
-        {/* CURRENT MEMBERS */}
+        {/* Assigned members */}
         <div className="mb-3">
           <div className="fw-semibold mb-2">Assigned</div>
 
-          {goal.members?.length ? (
-            goal.members.map((m: any) => (
-              <div
-                key={m.userId}
-                className="d-flex align-items-center gap-2 mb-2"
-              >
-                <Image
-                  roundedCircle
-                  width={32}
-                  height={32}
-                  src={
-                    m.avatar ??
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      m.name || "U"
-                    )}`
-                  }
-                />
-                <div>
-                  <div className="small fw-semibold">{m.name}</div>
-                  <div className="text-muted small">{m.email}</div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-muted small">No members yet</div>
+          {goal.members.length === 0 && (
+            <div className="text-muted small">No members assigned</div>
           )}
+
+          {goal.members.map((m: any) => (
+            <div
+              key={m.userId}
+              className="d-flex align-items-center gap-2 mb-2"
+            >
+              <div
+                className="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                style={{ width: 32, height: 32 }}
+              >
+                {getInitial(m.name, m.email)}
+              </div>
+              <div>{m.name}</div>
+            </div>
+          ))}
         </div>
 
         <hr />
 
-        {/* ADD MEMBER */}
-        <Form.Group>
-          <Form.Label>Add member</Form.Label>
-          <Form.Select
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
+        {/* Add member */}
+        <div>
+          <div className="fw-semibold mb-2">Add member</div>
+
+          <select
+            className="form-select"
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(e.target.value)}
           >
             <option value="">Select user</option>
             {users.map((u) => (
               <option key={u._id} value={u._id}>
-                {u.username} ({u.email})
+                {u.name || u.email}
               </option>
             ))}
-          </Form.Select>
-        </Form.Group>
+          </select>
+        </div>
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="outline-secondary" onClick={onHide}>
+        <Button variant="secondary" onClick={onHide}>
           Cancel
         </Button>
-        <Button onClick={addMember} disabled={!selectedUser}>
-          Add member
+        <Button
+          variant="primary"
+          onClick={handleAddMember}
+          disabled={!selectedUserId || loading}
+        >
+          {loading ? <Spinner size="sm" /> : "Add member"}
         </Button>
       </Modal.Footer>
     </Modal>

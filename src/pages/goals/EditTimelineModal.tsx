@@ -1,34 +1,36 @@
 import { Modal, Button, Form } from "react-bootstrap";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ApiClient from "../../utils/ApiClient";
 
 export default function EditTimelineModal({
   show,
   onHide,
   goal,
-  onSaved,
+  onUpdated,
 }: any) {
-  const [startDate, setStartDate] = useState(
-    goal?.startDate ? goal.startDate.substring(0, 10) : ""
-  );
-  const [endDate, setEndDate] = useState(
-    goal?.endDate ? goal.endDate.substring(0, 10) : ""
-  );
-  const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const saveTimeline = async () => {
+  // isi default saat modal dibuka
+  useEffect(() => {
+    setStartDate(goal?.startDate ? goal.startDate.slice(0, 10) : "");
+    setEndDate(goal?.endDate ? goal.endDate.slice(0, 10) : "");
+  }, [goal, show]);
+
+  const handleSave = async () => {
     try {
-      setLoading(true);
+      setSaving(true);
       await ApiClient.patch(`/goals/${goal._id}/timeline`, {
         startDate,
         endDate,
       });
-      onSaved();
+      onUpdated(); // refresh GoalDetail
       onHide();
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -62,7 +64,7 @@ export default function EditTimelineModal({
         <Button variant="secondary" onClick={onHide}>
           Cancel
         </Button>
-        <Button onClick={saveTimeline} disabled={loading}>
+        <Button onClick={handleSave} disabled={saving}>
           Save
         </Button>
       </Modal.Footer>
