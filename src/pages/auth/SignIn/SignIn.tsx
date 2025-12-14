@@ -1,128 +1,73 @@
-import { useState,type ChangeEvent, type FormEvent } from "react";
-import {Form, Button, Card, Spinner} from "react-bootstrap"
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import { Form, Button, Spinner } from "react-bootstrap";
+import { NavLink, useNavigate } from "react-router-dom";
 import ApiClient from "../../../utils/ApiClient";
-import {NavLink, useNavigate} from "react-router-dom";
+import AuthLayout from "../../../components/layout/AuthLayout";
 
-type SignInForm =  {
-    email: string,
-    password: string,
-}
+export default function SignIn() {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "" });
 
-function SignIn(){
-    const navigate = useNavigate()
-    const [isLoading, setIsLoading] = useState(false)
-    const [form, setform] = useState<SignInForm>({
-        email: "",
-        password: "",
-    })
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-    const onHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const { name, value} = event.target;
-
-        setform((prev) => ({
-            ...prev,
-            [name]: value
-        }))
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const res = await ApiClient.post("/signin", form);
+      const token = res.data?.data?.token;
+      if (token) {
+        localStorage.setItem("AuthToken", token);
+        navigate("/app/goals", { replace: true });
+      }
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Login gagal");
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
-        setIsLoading(true)
+  return (
+    <AuthLayout
+      title="Sign in to GoalSync"
+      subtitle="Track goals and progress together."
+    >
+      <Form onSubmit={onSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>Email</Form.Label>
+          <Form.Control
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={onChange}
+            required
+          />
+        </Form.Group>
 
-        try{
-            const response = await ApiClient.post("/signin", form)
+        <Form.Group className="mb-3">
+          <Form.Label>Password</Form.Label>
+          <Form.Control
+            name="password"
+            type="password"
+            placeholder="••••••••"
+            value={form.password}
+            onChange={onChange}
+            required
+          />
+        </Form.Group>
 
-            console.log("Login response:", response.data)
+        <Button type="submit" className="w-100" disabled={isLoading}>
+          {isLoading ? <Spinner size="sm" /> : "Sign In"}
+        </Button>
 
-            if(response.status === 200) {
-                const token = response.data?.token || response.data?.data?.token
-
-                if(token) {
-                    localStorage.setItem("AuthToken", token)
-
-                    navigate("/app/goals", {
-                        replace: true
-                    })
-                }
-            }
-            setIsLoading(false);
-        } catch (error: any){
-            console.error("Signin error:", error)
-            
-            if (error.response) {
-                console.error("Response status:", error.response.status)
-                console.error("Response data:", error.response.data)
-                console.error("Response headers:", error.response.headers)
-                alert(`Signin Gagal: ${error.response.data?.message || error.response.statusText || "Unknown error"}`)
-            } else if (error.request) {
-                console.error("No response received:", error.request)
-                alert("Signin Gagal: Tidak ada respons dari server")
-            } else {
-                console.error("Error:", error.message)
-                alert("Signin Gagal: " + error.message)
-            }
-            setIsLoading(false);
-        }
-    }
-    
-    return (
-        <div className="page-center">
-            <Card className="auth-card shadow-sm">
-                <Card.Body>
-                    <h2 className="mb-2">Sign in to GoalSync</h2>
-                    <p className="text-muted small">Masukkan email & password Anda.</p>
-
-                    <Form onSubmit={onSubmit} className="mt-3">
-                        <Form.Group className="mb-3" controlId="formemail">
-                        <Form.Label>Email</Form.Label>
-                        <Form.Control
-                            onChange={onHandleChange}
-                            value={form.email}
-                            name="email"
-                            type="email"
-                            placeholder="Masukkan Email"
-                            required
-                            autoComplete="username"
-                        />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3" controlId="formpassword">
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control
-                            onChange={onHandleChange}
-                            value={form.password}
-                            name="password"
-                            type="password"
-                            placeholder="Masukkan Password"
-                            required
-                            autoComplete="current-password"
-                        />
-                        </Form.Group>
-
-                        <div className="d-flex align-items-center justify-content-between gap-2">
-                        <Button type="submit" variant="primary" disabled={isLoading}>
-                            {isLoading ? (
-                            <>
-                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-                                {"  "}Loading...
-                            </>
-                            ) : (
-                            "Sign In"
-                            )}
-                        </Button>
-
-                        <NavLink to="/signup" className="small">
-                            Belum punya akun? Sign Up
-                        </NavLink>
-                        </div>
-                    </Form>
-                </Card.Body>
-            </Card>
+        <div className="text-center mt-3">
+          <NavLink to="/signup">Don’t have an account? Sign up</NavLink>
         </div>
-    )
-
-
+      </Form>
+    </AuthLayout>
+  );
 }
-
-
-export default SignIn

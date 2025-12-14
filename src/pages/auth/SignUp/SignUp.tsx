@@ -1,131 +1,80 @@
-import { useState,type ChangeEvent, type FormEvent } from "react";
-import {Form, Button, Card, Spinner} from "react-bootstrap"
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import { Form, Button, Spinner } from "react-bootstrap";
+import { NavLink, useNavigate } from "react-router-dom";
 import ApiClient from "../../../utils/ApiClient";
-import {NavLink, useNavigate} from "react-router-dom";
+import AuthLayout from "../../../components/layout/AuthLayout";
 
-interface SignUpForm {
-    username: string,
-    email: string,
-    password: string,
-}
+export default function SignUp() {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
 
-function SignUp() {
-    const navigate = useNavigate();
-    const [form, setform] = useState<SignUpForm>({
-        username: "",
-        email: "",
-        password: ""
-    })
-    const [isLoading, setIsLoading] = useState(false);
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-    const onHandleChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const { name, value} = event.target
-
-        setform({
-            ...form,
-            [name]: value
-        })
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await ApiClient.post("/signup", form);
+      navigate("/signin", { replace: true });
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Signup gagal");
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
-        setIsLoading(true);
+  return (
+    <AuthLayout
+      title="Create your account"
+      subtitle="Start tracking goals with your team."
+    >
+      <Form onSubmit={onSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>Username</Form.Label>
+          <Form.Control
+            name="username"
+            placeholder="Your name"
+            value={form.username}
+            onChange={onChange}
+            required
+          />
+        </Form.Group>
 
-        try{
-            const payload = { ...form, email: form.email.trim() };
-            const response = await ApiClient.post("/signup", payload)
+        <Form.Group className="mb-3">
+          <Form.Label>Email</Form.Label>
+          <Form.Control
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={onChange}
+            required
+          />
+        </Form.Group>
 
-            console.log("Signup response:", response.data)
-            alert("Signup berhasil, silahkan login !")
-            //navigate ini dibuat agar setelah signup langsung diarahkan ke halaman signin
-            navigate("/signin", { replace: true });
-        } catch (error: any){
-            console.error("Signup error:", error)
-            
-            if (error.response) {
-                console.error("Response status:", error.response.status)
-                console.error("Response data:", error.response.data)
-                console.error("Response headers:", error.response.headers)
-                alert(`Signup Gagal: ${error.response.data?.message || error.response.statusText || "Unknown error"}`)
-            } else if (error.request) {
-                console.error("No response received:", error.request)
-                alert("Signup Gagal: Tidak ada respons dari server")
-            } else {
-                console.error("Error:", error.message)
-                alert("Signup Gagal: " + error.message)
-            }
-        }
-    }
+        <Form.Group className="mb-4">
+          <Form.Label>Password</Form.Label>
+          <Form.Control
+            name="password"
+            type="password"
+            placeholder="Create a password"
+            value={form.password}
+            onChange={onChange}
+            required
+          />
+        </Form.Group>
 
-    return (
-        <div className="page-center">
-            <Card className="auth-card shadow-sm">
-                <Card.Body>
-                    <h2 className="mb-2">Sign Up to GoalSync</h2>
-                    <p className="text-muted small">Masukkan Username, Email, dan Password Anda.</p>
+        <Button type="submit" className="w-100" disabled={isLoading}>
+          {isLoading ? <Spinner size="sm" /> : "Sign Up"}
+        </Button>
 
-                    <Form onSubmit={onSubmit} className="mt-3">
-
-                        <Form.Group className="mb-3" controlId="formusername">
-                        <Form.Label>Username</Form.Label>
-                        <Form.Control
-                            onChange={onHandleChange}
-                            value={form.username}
-                            name="username"
-                            type="text"
-                            placeholder="Masukkan Username"
-                            required
-                            autoComplete="name"
-                        />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3" controlId="formemail">
-                        <Form.Label>Email</Form.Label>
-                        <Form.Control
-                            onChange={onHandleChange}
-                            value={form.email}
-                            name="email"
-                            type="email"
-                            placeholder="Masukkan Email"
-                            required
-                            autoComplete="email"
-                        />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3" controlId="formpassword">
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control
-                            onChange={onHandleChange}
-                            value={form.password}
-                            name="password"
-                            type="password"
-                            placeholder="Masukkan Password"
-                            required
-                            autoComplete="new-password"
-                        />
-                        </Form.Group>
-
-                        <div className="d-flex align-items-center justify-content-between gap-2">
-                        <Button type="submit" variant="primary" disabled={isLoading}>
-                            {isLoading ? (
-                            <>
-                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-                                {"  "}Loading...
-                            </>
-                            ) : (
-                            "Sign Up"
-                            )}
-                        </Button>
-
-                        <NavLink to="/signin" className="small">
-                            Sudah punya akun? Sign In
-                        </NavLink>
-                        </div>
-                    </Form>
-                </Card.Body>
-            </Card>
+        <div className="text-center mt-3">
+          <NavLink to="/signin">Already have an account? Sign in</NavLink>
         </div>
-    )
+      </Form>
+    </AuthLayout>
+  );
 }
-
-export default SignUp

@@ -8,7 +8,7 @@ const router = createBrowserRouter([
       {
         index: true,
         lazy: () =>
-          import("../pages/auth/SignIn/SignIn").then(m => ({
+          import("../pages/public/Landing").then(m => ({
             Component: m.default,
           })),
       },
