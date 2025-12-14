@@ -4,78 +4,31 @@ import {
   Card,
   Button,
   ProgressBar,
-  Spinner,
   Form,
-  Breadcrumb,
+  Row,
+  Col,
+  Spinner,
 } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 import AppNavbar from "../../components/layout/AppNavbar";
 import AddMemberModal from "./AddMemberModal";
-
-/* ================= TYPES ================= */
-
-type Task = {
-  _id: string;
-  title: string;
-  completed: boolean;
-};
-
-type Member = {
-  userId?: {
-    _id: string;
-    username?: string;
-    avatar?: string;
-  };
-  role?: string;
-};
-
-type Goal = {
-  _id: string;
-  title: string;
-  description?: string;
-  tasks?: Task[];
-  members?: Member[];
-  startDate?: string | null;
-  endDate?: string | null;
-};
-
-/* ================= COMPONENT ================= */
+import EditTimelineModal from "./EditTimelineModal";
 
 export default function GoalDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [goal, setGoal] = useState<Goal | null>(null);
+  const [goal, setGoal] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  // tasks
   const [newTask, setNewTask] = useState("");
-
-  // timeline
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [editTimeline, setEditTimeline] = useState(false);
-
-  // members
   const [showMember, setShowMember] = useState(false);
-
-  /* ================= FETCH ================= */
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const fetchGoal = async () => {
-    try {
-      setLoading(true);
-      const res = await ApiClient.get(`/goals/${id}`);
-      const data = res.data?.data ?? res.data;
-      setGoal(data);
-
-      setStartDate(data?.startDate ? data.startDate.slice(0, 10) : "");
-      setEndDate(data?.endDate ? data.endDate.slice(0, 10) : "");
-    } catch (err) {
-      console.error("Fetch goal failed", err);
-    } finally {
-      setLoading(false);
-    }
+    const res = await ApiClient.get(`/goals/${id}`);
+    setGoal(res.data?.data ?? res.data);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -84,250 +37,198 @@ export default function GoalDetail() {
 
   if (loading) {
     return (
-      <>
-        <AppNavbar />
-        <div className="text-center mt-5">
-          <Spinner animation="border" />
-        </div>
-      </>
+      <div className="text-center mt-5">
+        <Spinner />
+      </div>
     );
   }
 
-  if (!goal) return null;
-
-  /* ================= PROGRESS ================= */
-
-  const tasks: Task[] = Array.isArray(goal.tasks) ? goal.tasks : [];
-  const done = tasks.filter(t => t.completed).length;
+  const tasks = goal.tasks || [];
+  const completed = tasks.filter((t: any) => t.completed).length;
   const progress = tasks.length
-    ? Math.round((done / tasks.length) * 100)
+    ? Math.round((completed / tasks.length) * 100)
     : 0;
 
-  /* ================= HANDLERS ================= */
-
-  const handleAddTask = async () => {
+  const addTask = async () => {
     if (!newTask.trim()) return;
     await ApiClient.post(`/goals/${goal._id}/tasks`, { title: newTask });
     setNewTask("");
     fetchGoal();
   };
 
-  const handleToggleTask = async (taskId: string) => {
+  const toggleTask = async (taskId: string) => {
     await ApiClient.patch(
       `/goals/${goal._id}/tasks/${taskId}/toggle`
     );
     fetchGoal();
   };
 
-  const handleSaveTimeline = async () => {
-    await ApiClient.patch(`/goals/${goal._id}/timeline`, {
-      startDate: startDate || null,
-      endDate: endDate || null,
-    });
-    setEditTimeline(false);
-    fetchGoal();
-  };
-
-  /* ================= RENDER ================= */
-
   return (
     <>
       <AppNavbar />
 
-      <Container className="mt-4 mb-5" style={{ maxWidth: 900 }}>
-        {/* ===== BREADCRUMB ===== */}
-        <Breadcrumb className="mb-2">
-          <Breadcrumb.Item onClick={() => navigate("/app/goals")}>
+      <Container className="mt-4 mb-5" style={{ maxWidth: 880 }}>
+        {/* BREADCRUMB */}
+        <div className="mb-3 text-muted small">
+          <span
+            role="button"
+            className="text-primary"
+            onClick={() => navigate("/app/goals")}
+          >
             Goals
-          </Breadcrumb.Item>
-          <Breadcrumb.Item active>
-            {goal.title}
-          </Breadcrumb.Item>
-        </Breadcrumb>
-
-        {/* ===== HEADER ===== */}
-        <div className="mb-4">
-          <h2 className="mb-1">{goal.title}</h2>
-          <p className="text-muted mb-0">
-            {goal.description || "No description"}
-          </p>
+          </span>{" "}
+          / {goal.title}
         </div>
 
-        {/* ===== TIMELINE ===== */}
-        <Card className="mb-4 border-0 bg-light">
-          <Card.Body>
-            <h6 className="mb-2">Timeline</h6>
+        {/* HEADER */}
+        <h2 className="fw-semibold">{goal.title}</h2>
+        {goal.description && (
+          <p className="text-muted mb-4">{goal.description}</p>
+        )}
 
-            {!editTimeline ? (
-              <>
-                <div className="text-muted small mb-2">
-                  {goal.startDate || goal.endDate
-                    ? `${goal.startDate?.slice(0, 10) || "—"} – ${
-                        goal.endDate?.slice(0, 10) || "—"
-                      }`
-                    : "No timeline set"}
-                </div>
-
-                <Button
-                  size="sm"
-                  variant="outline-secondary"
-                  onClick={() => setEditTimeline(true)}
-                >
-                  Edit timeline
-                </Button>
-              </>
-            ) : (
-              <>
-                <Form.Group className="mb-2">
-                  <Form.Label>Start</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>End</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                  />
-                </Form.Group>
-
-                <div className="d-flex gap-2">
-                  <Button size="sm" onClick={handleSaveTimeline}>
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setEditTimeline(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </>
-            )}
-          </Card.Body>
-        </Card>
-
-        {/* ===== PROGRESS ===== */}
-        <div className="mb-4">
-          <ProgressBar now={progress} style={{ height: 6 }} />
-          <div className="text-muted small mt-1">
-            {done} of {tasks.length} tasks completed
-          </div>
-        </div>
-
-        {/* ===== TASKS ===== */}
-        <Card className="mb-4 border-0">
-          <Card.Body>
-            <h6 className="mb-3">Tasks</h6>
-
-            {tasks.length === 0 && (
-              <div className="text-muted small mb-3">
-                No tasks yet
-              </div>
-            )}
-
-            {tasks.map(t => (
-              <Form.Check
-                key={t._id}
-                type="checkbox"
-                className="mb-2"
-                checked={t.completed}
-                onChange={() => handleToggleTask(t._id)}
-                label={
-                  <span
-                    style={{
-                      textDecoration: t.completed
-                        ? "line-through"
-                        : "none",
-                      opacity: t.completed ? 0.6 : 1,
-                    }}
-                  >
-                    {t.title}
-                  </span>
-                }
-              />
-            ))}
-
-            <Form.Control
-              size="sm"
-              className="mt-3"
-              placeholder="Add a task and press Add"
-              value={newTask}
-              onChange={e => setNewTask(e.target.value)}
-            />
-
-            <Button
-              size="sm"
-              className="mt-2"
-              onClick={handleAddTask}
-            >
-              Add task
-            </Button>
-          </Card.Body>
-        </Card>
-
-        {/* ===== MEMBERS ===== */}
-        <Card className="mb-4 border-0">
-          <Card.Body>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h6 className="mb-0">Members</h6>
-              <Button size="sm" onClick={() => setShowMember(true)}>
-                Add member
-              </Button>
+        {/* TWO COLUMN LAYOUT */}
+        <Row className="g-4">
+          {/* LEFT */}
+          <Col lg={7}>
+            {/* PROGRESS */}
+            <div className="mb-2">
+              <ProgressBar now={progress} style={{ height: 8 }} />
+              <small className="text-muted">
+                {completed} of {tasks.length} tasks completed
+              </small>
             </div>
 
-            {(!goal.members || goal.members.length === 0) && (
-              <div className="text-muted small">
-                No members assigned
-              </div>
-            )}
+            {/* TASKS */}
+            <Card className="mt-4 border-0 shadow-sm">
+              <Card.Body>
+                <h6 className="fw-semibold mb-3">Tasks</h6>
 
-            {goal.members?.map((m, idx) => (
-              <div
-                key={m.userId?._id || idx}
-                className="d-flex align-items-center gap-2 mb-2"
-              >
+                {tasks.length === 0 && (
+                  <div className="text-muted small mb-3">
+                    No tasks yet.
+                  </div>
+                )}
+
+                {tasks.map((task: any) => (
+                  <Form.Check
+                    key={task._id}
+                    type="checkbox"
+                    className="mb-2"
+                    checked={task.completed}
+                    onChange={() => toggleTask(task._id)}
+                    label={
+                      <span
+                        style={{
+                          textDecoration: task.completed
+                            ? "line-through"
+                            : "none",
+                          color: task.completed ? "#999" : "#000",
+                        }}
+                      >
+                        {task.title}
+                      </span>
+                    }
+                  />
+                ))}
+
+                <div className="d-flex gap-2 mt-3">
+                  <Form.Control
+                    placeholder="Add a task and press Add"
+                    value={newTask}
+                    onChange={(e) => setNewTask(e.target.value)}
+                  />
+                  <Button onClick={addTask}>Add</Button>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* RIGHT */}
+          <Col lg={5}>
+            {/* TIMELINE */}
+            <Card className="border-0 shadow-sm mb-4">
+              <Card.Body>
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <h6 className="fw-semibold mb-0">Timeline</h6>
+                  <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    onClick={() => setShowTimeline(true)}
+                  >
+                    Edit
+                  </Button>
+                </div>
+
+                {goal.startDate ? (
+                  <div className="text-muted small">
+                    {new Date(goal.startDate).toLocaleDateString()} –{" "}
+                    {new Date(goal.endDate).toLocaleDateString()}
+                  </div>
+                ) : (
+                  <div className="text-muted small">
+                    No timeline set
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+
+            {/* MEMBERS */}
+            <Card className="border-0 shadow-sm mb-4">
+              <Card.Body>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <h6 className="fw-semibold mb-0">Members</h6>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowMember(true)}
+                  >
+                    Add
+                  </Button>
+                </div>
+
+                {goal.members?.length === 0 && (
+                  <div className="text-muted small">
+                    No members assigned
+                  </div>
+                )}
+
+                {goal.members?.map((m: any) => (
+                  <div key={m.userId} className="small mb-1">
+                    👤 {m.name || m.email || "Unknown"}
+                  </div>
+                ))}
+              </Card.Body>
+            </Card>
+
+            {/* ACTIVITY */}
+            <Card className="border-0 shadow-sm">
+              <Card.Body>
+                <h6 className="fw-semibold mb-2">Activity</h6>
                 <div
+                  className="text-muted small"
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "#dee2e6",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    maxHeight: 200,
+                    overflowY: "auto",
                   }}
                 >
-                  {m.userId?.username
-                    ? m.userId.username.slice(0, 2).toUpperCase()
-                    : "??"}
+                  Activity will appear here when changes happen.
                 </div>
-                <div className="small">
-                  {m.userId?.username || "Unknown user"}
-                </div>
-              </div>
-            ))}
-          </Card.Body>
-        </Card>
-
-        {/* ===== ACTIVITY PLACEHOLDER ===== */}
-        <div className="text-muted small">
-          Activity will appear here when changes happen.
-        </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
       </Container>
 
       <AddMemberModal
         show={showMember}
         onHide={() => setShowMember(false)}
         goalId={goal._id}
+        onUpdated={fetchGoal}
+      />
+
+      <EditTimelineModal
+        show={showTimeline}
+        onHide={() => setShowTimeline(false)}
+        goal={goal}
         onUpdated={fetchGoal}
       />
     </>
