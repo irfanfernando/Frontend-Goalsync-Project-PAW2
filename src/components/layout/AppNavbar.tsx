@@ -14,6 +14,7 @@ export default function AppNavbar() {
         const res = await ApiClient.get("/me");
         setMe(res.data?.data);
       } catch (err) {
+        console.error("get /me error", err);
       }
     })();
   }, []);
