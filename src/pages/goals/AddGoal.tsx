@@ -1,5 +1,11 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Container, Form, Button, Card } from "react-bootstrap";
+import {
+  Container,
+  Form,
+  Button,
+  Card,
+  Breadcrumb,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 import AppNavbar from "../../components/layout/AppNavbar";
@@ -21,6 +27,7 @@ export default function AddGoal() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       await ApiClient.post("/goals", form);
       navigate("/app/goals");
@@ -36,15 +43,30 @@ export default function AddGoal() {
       <AppNavbar />
 
       <Container className="mt-4 mb-5" style={{ maxWidth: 720 }}>
+        {/* ================= Breadcrumb ================= */}
+        <Breadcrumb className="mb-3">
+          <Breadcrumb.Item
+            linkAs="span"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/app/goals")}
+          >
+            Goals
+          </Breadcrumb.Item>
+          <Breadcrumb.Item active>New goal</Breadcrumb.Item>
+        </Breadcrumb>
+
+        {/* ================= Header ================= */}
         <h2 className="fw-semibold mb-1">New goal</h2>
         <p className="text-muted mb-4">
           Start with a clear goal. You can add tasks, timeline,
           and members later.
         </p>
 
+        {/* ================= Card ================= */}
         <Card className="border-0 shadow-sm">
           <Card.Body>
             <Form onSubmit={onSubmit}>
+              {/* Goal title */}
               <Form.Group className="mb-4">
                 <Form.Label>Goal title</Form.Label>
                 <Form.Control
@@ -59,6 +81,7 @@ export default function AddGoal() {
                 </Form.Text>
               </Form.Group>
 
+              {/* Description */}
               <Form.Group className="mb-4">
                 <Form.Label>Description (optional)</Form.Label>
                 <Form.Control
@@ -71,6 +94,7 @@ export default function AddGoal() {
                 />
               </Form.Group>
 
+              {/* Hint box */}
               <div
                 className="p-3 rounded small text-muted mb-4"
                 style={{ background: "#f8f9fa" }}
@@ -83,6 +107,7 @@ export default function AddGoal() {
                 </ul>
               </div>
 
+              {/* Actions */}
               <div className="d-flex justify-content-end gap-2">
                 <Button
                   variant="outline-secondary"
