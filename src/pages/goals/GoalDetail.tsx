@@ -7,8 +7,7 @@ import {
   Form,
   Row,
   Col,
-  Spinner,
-  Image,
+  Breadcrumb,
 } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
@@ -17,15 +16,8 @@ import AddMemberModal from "./AddMemberModal";
 import EditTimelineModal from "./EditTimelineModal";
 
 /* =======================
-   Helpers (AMAN)
+   Helper
 ======================= */
-const resolveAvatar = (avatar?: string | null, name?: string) => {
-  if (avatar) return avatar;
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name || "U"
-  )}&background=e5e7eb&color=374151`;
-};
-
 const timeAgo = (date: string) => {
   const diff = Math.floor(
     (Date.now() - new Date(date).getTime()) / 1000
@@ -47,27 +39,19 @@ export default function GoalDetail() {
   const [showTimeline, setShowTimeline] = useState(false);
 
   const fetchGoal = async () => {
-    try {
-      const res = await ApiClient.get(`/goals/${id}`);
-      setGoal(res.data?.data ?? res.data);
-    } catch (err) {
-      alert("Failed to load goal");
-    } finally {
-      setLoading(false);
-    }
+    const res = await ApiClient.get(`/goals/${id}`);
+    setGoal(res.data?.data ?? res.data);
   };
 
   useEffect(() => {
-    fetchGoal();
+    fetchGoal().finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) {
+  if (loading || !goal) {
     return (
       <>
         <AppNavbar />
-        <div className="text-center mt-5">
-          <Spinner />
-        </div>
+        <div className="text-center mt-5">Loading...</div>
       </>
     );
   }
@@ -95,10 +79,7 @@ export default function GoalDetail() {
   };
 
   const activities =
-    goal.actions
-      ?.slice()
-      .reverse()
-      .slice(0, 6) ?? [];
+    goal.actions?.slice().reverse().slice(0, 8) ?? [];
 
   return (
     <>
@@ -106,37 +87,21 @@ export default function GoalDetail() {
 
       <Container className="mt-4 mb-5" style={{ maxWidth: 900 }}>
         {/* Breadcrumb */}
-        <div className="mb-3 small text-muted">
-          <span
-            role="button"
-            className="text-primary"
+        <Breadcrumb className="mb-3">
+          <Breadcrumb.Item
+            linkAs="span"
+            style={{ cursor: "pointer" }}
             onClick={() => navigate("/app/goals")}
           >
             Goals
-          </span>{" "}
-          / {goal.title}
-        </div>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item active>{goal.title}</Breadcrumb.Item>
+        </Breadcrumb>
 
-        {/* Header */}
         <h2 className="fw-semibold mb-1">{goal.title}</h2>
-
         {goal.description && (
           <p className="text-muted mb-3">{goal.description}</p>
         )}
-
-        {/* Owner (SAFE VERSION) */}
-        <div className="mb-4">
-          <div className="small text-muted mb-1">Owner</div>
-          <div className="d-flex align-items-center gap-2">
-            <Image
-              src={`https://ui-avatars.com/api/?name=You&background=e5e7eb&color=374151`}
-              roundedCircle
-              width={28}
-              height={28}
-            />
-            <span className="small fw-medium">You</span>
-          </div>
-        </div>
 
         {/* Progress */}
         <Card className="border-0 shadow-sm mb-4">
@@ -175,7 +140,6 @@ export default function GoalDetail() {
                             ? "line-through"
                             : "none",
                           color: task.completed ? "#9ca3af" : "#111",
-                          cursor: "pointer",
                         }}
                       >
                         {task.title}
@@ -186,7 +150,7 @@ export default function GoalDetail() {
 
                 <div className="d-flex gap-2 mt-3">
                   <Form.Control
-                    placeholder="Add a task and press Add"
+                    placeholder="Add a task"
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
                   />
@@ -198,65 +162,26 @@ export default function GoalDetail() {
 
           {/* Right Column */}
           <Col md={4}>
-            {/* Timeline */}
-            <Card className="border-0 shadow-sm mb-4">
-              <Card.Body>
-                <div className="d-flex justify-content-between align-items-center mb-1">
-                  <h6 className="fw-semibold mb-0">Timeline</h6>
-                  <Button
-                    size="sm"
-                    variant="outline-secondary"
-                    onClick={() => setShowTimeline(true)}
-                  >
-                    Edit
-                  </Button>
-                </div>
-
-                {goal.startDate ? (
-                  <div className="text-muted small">
-                    {new Date(goal.startDate).toLocaleDateString()} –{" "}
-                    {new Date(goal.endDate).toLocaleDateString()}
-                  </div>
-                ) : (
-                  <div className="text-muted small">
-                    No timeline set
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-
             {/* Members */}
             <Card className="border-0 shadow-sm mb-4">
               <Card.Body>
-                <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="d-flex justify-content-between mb-3">
                   <h6 className="fw-semibold mb-0">Members</h6>
                   <Button size="sm" onClick={() => setShowMember(true)}>
                     Add
                   </Button>
                 </div>
 
-                {goal.members?.length === 0 && (
-                  <div className="text-muted small">
-                    No members assigned
-                  </div>
-                )}
-
                 {goal.members?.map((m: any) => (
                   <div
                     key={m.userId}
-                    className="d-flex align-items-center gap-2 mb-2"
+                    className="d-flex align-items-center gap-2 mb-3"
                   >
-                    <Image
-                      src={resolveAvatar(m.avatar, m.name || m.email)}
-                      roundedCircle
-                      width={32}
-                      height={32}
-                    />
-                    <div className="small">
+                    <div className="small" style={{ flex: 1 }}>
                       <div className="fw-medium">
-                        {m.name || "Unknown"}
+                        {m.name || m.username || "Unknown"}
                       </div>
-                      <div className="text-muted">
+                      <div className="text-muted" style={{ fontSize: "0.85em" }}>
                         {m.email}
                       </div>
                     </div>
@@ -265,38 +190,75 @@ export default function GoalDetail() {
               </Card.Body>
             </Card>
 
-            {/* Activity */}
+            {/* ======================
+                ACTIVITY (MODERN)
+               ====================== */}
             <Card className="border-0 shadow-sm">
-              <Card.Body style={{ maxHeight: 260, overflowY: "auto" }}>
-                <h6 className="fw-semibold mb-2">Activity</h6>
+              <Card.Body>
+                <h6 className="fw-semibold mb-3">Activity</h6>
 
-                {activities.length === 0 && (
-                  <div className="text-muted small">
-                    No activity yet.
-                  </div>
-                )}
-
-                {activities.map((a: any, i: number) => (
-                  <div
-                    key={i}
-                    className="d-flex gap-2 mb-3 pb-2 border-bottom small"
-                  >
-                    <span>{a.delta > 0 ? "✔" : "↺"}</span>
-                    <div>
-                      <div className="fw-medium">{a.note}</div>
-                      <div className="text-muted">
-                        {timeAgo(a.createdAt)}
-                      </div>
+                <div style={{ maxHeight: 350, overflowY: "auto", paddingRight: 8 }}>
+                  {activities.length === 0 && (
+                    <div className="text-muted small">
+                      No activity yet.
                     </div>
-                  </div>
-                ))}
+                  )}
+
+                  {activities.map((a: any, i: number) => {
+                    const getIcon = () => {
+                      switch (a.type) {
+                        case "TASK_COMPLETED":
+                          return "✅";
+                        case "TASK_REOPENED":
+                          return "🔄";
+                        case "TASK_ADDED":
+                          return "➕";
+                        default:
+                          return "📝";
+                      }
+                    };
+
+                    return (
+                      <div
+                        key={i}
+                        className="mb-3 pb-2 border-bottom small"
+                        style={{ display: "flex", gap: "8px" }}
+                      >
+                        <span style={{ fontSize: "1.2em", minWidth: "24px" }}>
+                          {getIcon()}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <div className="fw-medium">
+                            {(a.performedBy?.username || "Someone")}{" "}
+                            <span style={{ color: "#6b7280" }}>
+                              {a.type === "TASK_COMPLETED"
+                                ? "completed"
+                                : a.type === "TASK_REOPENED"
+                                ? "reopened"
+                                : a.type === "TASK_ADDED"
+                                ? "added a task"
+                                : "updated"}
+                            </span>
+                          </div>
+
+                          <div className="fst-italic" style={{ color: "#4b5563", marginTop: "4px" }}>
+                            "{a.taskTitle || a.note}"
+                          </div>
+
+                          <div className="text-muted" style={{ fontSize: "0.85em", marginTop: "4px" }}>
+                            {timeAgo(a.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </Card.Body>
             </Card>
           </Col>
         </Row>
       </Container>
 
-      {/* Modals */}
       <AddMemberModal
         show={showMember}
         onHide={() => setShowMember(false)}

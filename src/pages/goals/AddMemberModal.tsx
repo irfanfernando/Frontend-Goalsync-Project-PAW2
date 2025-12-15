@@ -35,9 +35,12 @@ export default function AddMemberModal({
           {users.map((u) => (
             <ListGroup.Item
               key={u._id}
-              className="d-flex justify-content-between"
+              className="d-flex justify-content-between align-items-center"
             >
-              <div>{u.name || u.email}</div>
+              <div>
+                <div className="fw-medium">{u.name || u.username || "Unknown"}</div>
+                <div className="text-muted small">{u.email}</div>
+              </div>
               <Button size="sm" onClick={() => addMember(u._id)}>
                 Add
               </Button>

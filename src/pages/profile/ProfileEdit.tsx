@@ -97,7 +97,11 @@ export default function ProfileEdit() {
       <Container style={{ maxWidth: 900 }} className="mt-4 mb-5">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-3">
-          <Breadcrumb.Item onClick={() => navigate("/app/goals")} linkAs="span">
+          <Breadcrumb.Item
+            onClick={() => navigate("/app/goals")}
+            linkAs="span"
+            style={{ cursor: "pointer" }}
+          >
             Goals
           </Breadcrumb.Item>
           <Breadcrumb.Item active>Profile</Breadcrumb.Item>
