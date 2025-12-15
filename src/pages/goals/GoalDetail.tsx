@@ -67,9 +67,9 @@ export default function GoalDetail() {
     <>
       <AppNavbar />
 
-      <Container className="mt-4 mb-5" style={{ maxWidth: 880 }}>
+      <Container className="mt-4 mb-5" style={{ maxWidth: 900 }}>
         {/* BREADCRUMB */}
-        <div className="mb-3 text-muted small">
+        <div className="mb-3 small text-muted">
           <span
             role="button"
             className="text-primary"
@@ -80,26 +80,27 @@ export default function GoalDetail() {
           / {goal.title}
         </div>
 
-        {/* HEADER */}
-        <h2 className="fw-semibold">{goal.title}</h2>
+        {/* HEADER (ADDGOAL STYLE) */}
+        <h2 className="fw-semibold mb-1">{goal.title}</h2>
         {goal.description && (
           <p className="text-muted mb-4">{goal.description}</p>
         )}
 
-        {/* TWO COLUMN LAYOUT */}
-        <Row className="g-4">
-          {/* LEFT */}
-          <Col lg={7}>
-            {/* PROGRESS */}
-            <div className="mb-2">
-              <ProgressBar now={progress} style={{ height: 8 }} />
-              <small className="text-muted">
-                {completed} of {tasks.length} tasks completed
-              </small>
+        {/* PROGRESS CARD */}
+        <Card className="border-0 shadow-sm mb-4">
+          <Card.Body>
+            <ProgressBar now={progress} style={{ height: 8 }} />
+            <div className="small text-muted mt-2">
+              {completed} of {tasks.length} tasks completed
             </div>
+          </Card.Body>
+        </Card>
 
-            {/* TASKS */}
-            <Card className="mt-4 border-0 shadow-sm">
+        {/* MAIN CONTENT */}
+        <Row className="g-4">
+          {/* LEFT - TASKS */}
+          <Col md={8}>
+            <Card className="border-0 shadow-sm">
               <Card.Body>
                 <h6 className="fw-semibold mb-3">Tasks</h6>
 
@@ -143,8 +144,8 @@ export default function GoalDetail() {
             </Card>
           </Col>
 
-          {/* RIGHT */}
-          <Col lg={5}>
+          {/* RIGHT - META */}
+          <Col md={4}>
             {/* TIMELINE */}
             <Card className="border-0 shadow-sm mb-4">
               <Card.Body>
@@ -203,6 +204,7 @@ export default function GoalDetail() {
             <Card className="border-0 shadow-sm">
               <Card.Body>
                 <h6 className="fw-semibold mb-2">Activity</h6>
+
                 {goal.actions?.length === 0 && (
                   <div className="text-muted small">
                     No activity yet.

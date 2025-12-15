@@ -64,6 +64,14 @@ const router = createBrowserRouter([
             Component: m.default,
           })),
       },
+
+      {
+      path: "profile",
+      lazy: () =>
+        import("../pages/profile/ProfileEdit.tsx").then(m => ({
+          Component: m.default,
+        })),
+    },
     ],
   },
 ]);
