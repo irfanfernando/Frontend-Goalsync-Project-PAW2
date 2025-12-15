@@ -8,12 +8,22 @@ import {
   Row,
   Col,
   Spinner,
+  Image,
 } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 import AppNavbar from "../../components/layout/AppNavbar";
 import AddMemberModal from "./AddMemberModal";
 import EditTimelineModal from "./EditTimelineModal";
+
+const API_BASE_URL = "http://localhost:3000";
+
+const resolveAvatar = (avatar?: string | null, name?: string) => {
+  if (avatar) return `${API_BASE_URL}${avatar}`;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    name || "U"
+  )}`;
+};
 
 export default function GoalDetail() {
   const { id } = useParams();
@@ -63,6 +73,15 @@ export default function GoalDetail() {
     fetchGoal();
   };
 
+  /* =====================
+     Activity (UX FIX)
+  ===================== */
+  const activities =
+    goal.actions
+      ?.slice()
+      .reverse()
+      .slice(0, 6) ?? [];
+
   return (
     <>
       <AppNavbar />
@@ -80,13 +99,13 @@ export default function GoalDetail() {
           / {goal.title}
         </div>
 
-        {/* HEADER (ADDGOAL STYLE) */}
+        {/* HEADER */}
         <h2 className="fw-semibold mb-1">{goal.title}</h2>
         {goal.description && (
           <p className="text-muted mb-4">{goal.description}</p>
         )}
 
-        {/* PROGRESS CARD */}
+        {/* PROGRESS */}
         <Card className="border-0 shadow-sm mb-4">
           <Card.Body>
             <ProgressBar now={progress} style={{ height: 8 }} />
@@ -96,9 +115,8 @@ export default function GoalDetail() {
           </Card.Body>
         </Card>
 
-        {/* MAIN CONTENT */}
         <Row className="g-4">
-          {/* LEFT - TASKS */}
+          {/* TASKS */}
           <Col md={8}>
             <Card className="border-0 shadow-sm">
               <Card.Body>
@@ -144,7 +162,7 @@ export default function GoalDetail() {
             </Card>
           </Col>
 
-          {/* RIGHT - META */}
+          {/* RIGHT SIDE */}
           <Col md={4}>
             {/* TIMELINE */}
             <Card className="border-0 shadow-sm mb-4">
@@ -173,7 +191,7 @@ export default function GoalDetail() {
               </Card.Body>
             </Card>
 
-            {/* MEMBERS */}
+            {/* MEMBERS (AVATAR) */}
             <Card className="border-0 shadow-sm mb-4">
               <Card.Body>
                 <div className="d-flex justify-content-between align-items-center mb-2">
@@ -193,27 +211,56 @@ export default function GoalDetail() {
                 )}
 
                 {goal.members?.map((m: any) => (
-                  <div key={m.userId} className="small mb-1">
-                    👤 {m.name || m.email || "Unknown"}
+                  <div
+                    key={m.userId}
+                    className="d-flex align-items-center gap-2 mb-2"
+                  >
+                    <Image
+                      src={resolveAvatar(m.avatar, m.name || m.email)}
+                      roundedCircle
+                      width={32}
+                      height={32}
+                    />
+                    <div className="small">
+                      <div className="fw-medium">
+                        {m.name || "Unknown"}
+                      </div>
+                      <div className="text-muted">
+                        {m.email}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </Card.Body>
             </Card>
 
-            {/* ACTIVITY */}
+            {/* ACTIVITY (LIMITED + SCROLLABLE) */}
             <Card className="border-0 shadow-sm">
-              <Card.Body>
+              <Card.Body
+                style={{ maxHeight: 260, overflowY: "auto" }}
+              >
                 <h6 className="fw-semibold mb-2">Activity</h6>
 
-                {goal.actions?.length === 0 && (
+                {activities.length === 0 && (
                   <div className="text-muted small">
                     No activity yet.
                   </div>
                 )}
 
-                {goal.actions?.map((a: any, i: number) => (
-                  <div key={i} className="small mb-1">
-                    • {a.note}
+                {activities.map((a: any, i: number) => (
+                  <div
+                    key={i}
+                    className="small mb-2 d-flex gap-2"
+                  >
+                    <span>
+                      {a.delta > 0 ? "✔" : "↺"}
+                    </span>
+                    <div>
+                      <div>{a.note}</div>
+                      <div className="text-muted">
+                        {new Date(a.createdAt).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </Card.Body>
