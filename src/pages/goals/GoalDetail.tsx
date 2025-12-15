@@ -17,15 +17,13 @@ import AddMemberModal from "./AddMemberModal";
 import EditTimelineModal from "./EditTimelineModal";
 
 /* =======================
-   Helpers
+   Helpers (AMAN)
 ======================= */
-const API_BASE_URL = "http://localhost:3000";
-
 const resolveAvatar = (avatar?: string | null, name?: string) => {
-  if (avatar) return `${API_BASE_URL}${avatar}`;
+  if (avatar) return avatar;
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
     name || "U"
-  )}`;
+  )}&background=e5e7eb&color=374151`;
 };
 
 const timeAgo = (date: string) => {
@@ -38,9 +36,6 @@ const timeAgo = (date: string) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-/* =======================
-   Component
-======================= */
 export default function GoalDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -52,9 +47,14 @@ export default function GoalDetail() {
   const [showTimeline, setShowTimeline] = useState(false);
 
   const fetchGoal = async () => {
-    const res = await ApiClient.get(`/goals/${id}`);
-    setGoal(res.data?.data ?? res.data);
-    setLoading(false);
+    try {
+      const res = await ApiClient.get(`/goals/${id}`);
+      setGoal(res.data?.data ?? res.data);
+    } catch (err) {
+      alert("Failed to load goal");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -80,7 +80,9 @@ export default function GoalDetail() {
 
   const addTask = async () => {
     if (!newTask.trim()) return;
-    await ApiClient.post(`/goals/${goal._id}/tasks`, { title: newTask });
+    await ApiClient.post(`/goals/${goal._id}/tasks`, {
+      title: newTask,
+    });
     setNewTask("");
     fetchGoal();
   };
@@ -92,9 +94,6 @@ export default function GoalDetail() {
     fetchGoal();
   };
 
-  /* =======================
-     Activity (LIMIT + UX)
-  ======================= */
   const activities =
     goal.actions
       ?.slice()
@@ -120,9 +119,24 @@ export default function GoalDetail() {
 
         {/* Header */}
         <h2 className="fw-semibold mb-1">{goal.title}</h2>
+
         {goal.description && (
-          <p className="text-muted mb-4">{goal.description}</p>
+          <p className="text-muted mb-3">{goal.description}</p>
         )}
+
+        {/* Owner (SAFE VERSION) */}
+        <div className="mb-4">
+          <div className="small text-muted mb-1">Owner</div>
+          <div className="d-flex align-items-center gap-2">
+            <Image
+              src={`https://ui-avatars.com/api/?name=You&background=e5e7eb&color=374151`}
+              roundedCircle
+              width={28}
+              height={28}
+            />
+            <span className="small fw-medium">You</span>
+          </div>
+        </div>
 
         {/* Progress */}
         <Card className="border-0 shadow-sm mb-4">
@@ -182,7 +196,7 @@ export default function GoalDetail() {
             </Card>
           </Col>
 
-          {/* Right column */}
+          {/* Right Column */}
           <Col md={4}>
             {/* Timeline */}
             <Card className="border-0 shadow-sm mb-4">
@@ -211,7 +225,7 @@ export default function GoalDetail() {
               </Card.Body>
             </Card>
 
-            {/* MEMBERS */}
+            {/* Members */}
             <Card className="border-0 shadow-sm mb-4">
               <Card.Body>
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -238,7 +252,6 @@ export default function GoalDetail() {
                       width={32}
                       height={32}
                     />
-
                     <div className="small">
                       <div className="fw-medium">
                         {m.name || "Unknown"}
@@ -252,8 +265,7 @@ export default function GoalDetail() {
               </Card.Body>
             </Card>
 
-
-            {/* Activity (SMART) */}
+            {/* Activity */}
             <Card className="border-0 shadow-sm">
               <Card.Body style={{ maxHeight: 260, overflowY: "auto" }}>
                 <h6 className="fw-semibold mb-2">Activity</h6>
