@@ -16,6 +16,9 @@ import AppNavbar from "../../components/layout/AppNavbar";
 import AddMemberModal from "./AddMemberModal";
 import EditTimelineModal from "./EditTimelineModal";
 
+/* =======================
+   Helpers
+======================= */
 const API_BASE_URL = "http://localhost:3000";
 
 const resolveAvatar = (avatar?: string | null, name?: string) => {
@@ -25,6 +28,19 @@ const resolveAvatar = (avatar?: string | null, name?: string) => {
   )}`;
 };
 
+const timeAgo = (date: string) => {
+  const diff = Math.floor(
+    (Date.now() - new Date(date).getTime()) / 1000
+  );
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+};
+
+/* =======================
+   Component
+======================= */
 export default function GoalDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -47,9 +63,12 @@ export default function GoalDetail() {
 
   if (loading) {
     return (
-      <div className="text-center mt-5">
-        <Spinner />
-      </div>
+      <>
+        <AppNavbar />
+        <div className="text-center mt-5">
+          <Spinner />
+        </div>
+      </>
     );
   }
 
@@ -73,9 +92,9 @@ export default function GoalDetail() {
     fetchGoal();
   };
 
-  /* =====================
-     Activity (UX FIX)
-  ===================== */
+  /* =======================
+     Activity (LIMIT + UX)
+  ======================= */
   const activities =
     goal.actions
       ?.slice()
@@ -87,7 +106,7 @@ export default function GoalDetail() {
       <AppNavbar />
 
       <Container className="mt-4 mb-5" style={{ maxWidth: 900 }}>
-        {/* BREADCRUMB */}
+        {/* Breadcrumb */}
         <div className="mb-3 small text-muted">
           <span
             role="button"
@@ -99,13 +118,13 @@ export default function GoalDetail() {
           / {goal.title}
         </div>
 
-        {/* HEADER */}
+        {/* Header */}
         <h2 className="fw-semibold mb-1">{goal.title}</h2>
         {goal.description && (
           <p className="text-muted mb-4">{goal.description}</p>
         )}
 
-        {/* PROGRESS */}
+        {/* Progress */}
         <Card className="border-0 shadow-sm mb-4">
           <Card.Body>
             <ProgressBar now={progress} style={{ height: 8 }} />
@@ -115,8 +134,8 @@ export default function GoalDetail() {
           </Card.Body>
         </Card>
 
-        <Row className="g-4">
-          {/* TASKS */}
+        <Row className="g-4 align-items-start">
+          {/* Tasks */}
           <Col md={8}>
             <Card className="border-0 shadow-sm">
               <Card.Body>
@@ -141,7 +160,8 @@ export default function GoalDetail() {
                           textDecoration: task.completed
                             ? "line-through"
                             : "none",
-                          color: task.completed ? "#999" : "#000",
+                          color: task.completed ? "#9ca3af" : "#111",
+                          cursor: "pointer",
                         }}
                       >
                         {task.title}
@@ -162,9 +182,9 @@ export default function GoalDetail() {
             </Card>
           </Col>
 
-          {/* RIGHT SIDE */}
+          {/* Right column */}
           <Col md={4}>
-            {/* TIMELINE */}
+            {/* Timeline */}
             <Card className="border-0 shadow-sm mb-4">
               <Card.Body>
                 <div className="d-flex justify-content-between align-items-center mb-1">
@@ -191,15 +211,12 @@ export default function GoalDetail() {
               </Card.Body>
             </Card>
 
-            {/* MEMBERS (AVATAR) */}
+            {/* MEMBERS */}
             <Card className="border-0 shadow-sm mb-4">
               <Card.Body>
-                <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="d-flex justify-content-between align-items-center mb-3">
                   <h6 className="fw-semibold mb-0">Members</h6>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowMember(true)}
-                  >
+                  <Button size="sm" onClick={() => setShowMember(true)}>
                     Add
                   </Button>
                 </div>
@@ -221,6 +238,7 @@ export default function GoalDetail() {
                       width={32}
                       height={32}
                     />
+
                     <div className="small">
                       <div className="fw-medium">
                         {m.name || "Unknown"}
@@ -234,11 +252,10 @@ export default function GoalDetail() {
               </Card.Body>
             </Card>
 
-            {/* ACTIVITY (LIMITED + SCROLLABLE) */}
+
+            {/* Activity (SMART) */}
             <Card className="border-0 shadow-sm">
-              <Card.Body
-                style={{ maxHeight: 260, overflowY: "auto" }}
-              >
+              <Card.Body style={{ maxHeight: 260, overflowY: "auto" }}>
                 <h6 className="fw-semibold mb-2">Activity</h6>
 
                 {activities.length === 0 && (
@@ -250,15 +267,13 @@ export default function GoalDetail() {
                 {activities.map((a: any, i: number) => (
                   <div
                     key={i}
-                    className="small mb-2 d-flex gap-2"
+                    className="d-flex gap-2 mb-3 pb-2 border-bottom small"
                   >
-                    <span>
-                      {a.delta > 0 ? "✔" : "↺"}
-                    </span>
+                    <span>{a.delta > 0 ? "✔" : "↺"}</span>
                     <div>
-                      <div>{a.note}</div>
+                      <div className="fw-medium">{a.note}</div>
                       <div className="text-muted">
-                        {new Date(a.createdAt).toLocaleString()}
+                        {timeAgo(a.createdAt)}
                       </div>
                     </div>
                   </div>
@@ -269,6 +284,7 @@ export default function GoalDetail() {
         </Row>
       </Container>
 
+      {/* Modals */}
       <AddMemberModal
         show={showMember}
         onHide={() => setShowMember(false)}
