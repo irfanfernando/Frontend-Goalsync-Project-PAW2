@@ -28,23 +28,24 @@ export default function SignUp() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Start tracking goals with your team."
+      title="Get started"
+      subtitle="Create your GoalSync account in seconds"
     >
       <Form onSubmit={onSubmit}>
-        <Form.Group className="mb-3">
-          <Form.Label>Username</Form.Label>
+        <Form.Group className="mb-4">
+          <Form.Label style={{ fontSize: "14px", fontWeight: "500", color: "#111827", marginBottom: "8px" }}>Full name</Form.Label>
           <Form.Control
             name="username"
-            placeholder="Your name"
+            placeholder="John Doe"
             value={form.username}
             onChange={onChange}
             required
+            style={{ fontSize: "14px", borderColor: "#e5e7eb", padding: "10px 12px" }}
           />
         </Form.Group>
 
-        <Form.Group className="mb-3">
-          <Form.Label>Email</Form.Label>
+        <Form.Group className="mb-4">
+          <Form.Label style={{ fontSize: "14px", fontWeight: "500", color: "#111827", marginBottom: "8px" }}>Email address</Form.Label>
           <Form.Control
             name="email"
             type="email"
@@ -52,11 +53,12 @@ export default function SignUp() {
             value={form.email}
             onChange={onChange}
             required
+            style={{ fontSize: "14px", borderColor: "#e5e7eb", padding: "10px 12px" }}
           />
         </Form.Group>
 
         <Form.Group className="mb-4">
-          <Form.Label>Password</Form.Label>
+          <Form.Label style={{ fontSize: "14px", fontWeight: "500", color: "#111827", marginBottom: "8px" }}>Password</Form.Label>
           <Form.Control
             name="password"
             type="password"
@@ -64,15 +66,34 @@ export default function SignUp() {
             value={form.password}
             onChange={onChange}
             required
+            style={{ fontSize: "14px", borderColor: "#e5e7eb", padding: "10px 12px" }}
           />
+          <Form.Text style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>
+            At least 6 characters recommended
+          </Form.Text>
         </Form.Group>
 
-        <Button type="submit" className="w-100" disabled={isLoading}>
-          {isLoading ? <Spinner size="sm" /> : "Sign Up"}
+        <Button 
+          type="submit" 
+          className="w-100" 
+          disabled={isLoading}
+          style={{ 
+            backgroundColor: "#6366f1", 
+            borderColor: "#6366f1",
+            fontSize: "14px",
+            fontWeight: "600",
+            padding: "10px 16px",
+            marginBottom: "16px"
+          }}
+        >
+          {isLoading ? <Spinner size="sm" /> : "Create account"}
         </Button>
 
-        <div className="text-center mt-3">
-          <NavLink to="/signin">Already have an account? Sign in</NavLink>
+        <div style={{ textAlign: "center", fontSize: "14px", color: "#6b7280" }}>
+          Already have an account?{" "}
+          <NavLink to="/signin" style={{ color: "#6366f1", fontWeight: "600", textDecoration: "none" }}>
+            Sign in
+          </NavLink>
         </div>
       </Form>
     </AuthLayout>
