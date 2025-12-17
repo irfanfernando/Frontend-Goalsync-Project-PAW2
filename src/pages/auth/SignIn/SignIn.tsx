@@ -32,12 +32,12 @@ export default function SignIn() {
 
   return (
     <AuthLayout
-      title="Sign in to GoalSync"
-      subtitle="Track goals and progress together."
+      title="Welcome back"
+      subtitle="Sign in to your GoalSync account"
     >
       <Form onSubmit={onSubmit}>
-        <Form.Group className="mb-3">
-          <Form.Label>Email</Form.Label>
+        <Form.Group className="mb-4">
+          <Form.Label style={{ fontSize: "14px", fontWeight: "500", color: "#111827", marginBottom: "8px" }}>Email address</Form.Label>
           <Form.Control
             name="email"
             type="email"
@@ -45,11 +45,12 @@ export default function SignIn() {
             value={form.email}
             onChange={onChange}
             required
+            style={{ fontSize: "14px", borderColor: "#e5e7eb", padding: "10px 12px" }}
           />
         </Form.Group>
 
-        <Form.Group className="mb-3">
-          <Form.Label>Password</Form.Label>
+        <Form.Group className="mb-4">
+          <Form.Label style={{ fontSize: "14px", fontWeight: "500", color: "#111827", marginBottom: "8px" }}>Password</Form.Label>
           <Form.Control
             name="password"
             type="password"
@@ -57,15 +58,31 @@ export default function SignIn() {
             value={form.password}
             onChange={onChange}
             required
+            style={{ fontSize: "14px", borderColor: "#e5e7eb", padding: "10px 12px" }}
           />
         </Form.Group>
 
-        <Button type="submit" className="w-100" disabled={isLoading}>
-          {isLoading ? <Spinner size="sm" /> : "Sign In"}
+        <Button 
+          type="submit" 
+          className="w-100" 
+          disabled={isLoading}
+          style={{ 
+            backgroundColor: "#6366f1", 
+            borderColor: "#6366f1",
+            fontSize: "14px",
+            fontWeight: "600",
+            padding: "10px 16px",
+            marginBottom: "16px"
+          }}
+        >
+          {isLoading ? <Spinner size="sm" /> : "Sign in"}
         </Button>
 
-        <div className="text-center mt-3">
-          <NavLink to="/signup">Don’t have an account? Sign up</NavLink>
+        <div style={{ textAlign: "center", fontSize: "14px", color: "#6b7280" }}>
+          Don't have an account?{" "}
+          <NavLink to="/signup" style={{ color: "#6366f1", fontWeight: "600", textDecoration: "none" }}>
+            Create one
+          </NavLink>
         </div>
       </Form>
     </AuthLayout>
