@@ -1,31 +1,32 @@
-import { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Button, Spinner, Alert } from "react-bootstrap";
+import { useEffect, useMemo, useState } from "react";
+import { Container, Button, Row, Col, Spinner, Image } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 import AppNavbar from "../../components/layout/AppNavbar";
 
-type Goal = {
-  _id: string;
-  title: string;
-  description?: string;
-  progress?: number;
+const resolveAvatar = (avatar?: string | null, name?: string) => {
+  if (avatar) {
+    // If it's a relative path (starts with avatars/), prepend backend URL
+    if (avatar.startsWith("avatars/")) {
+      return `http://localhost:3000/${avatar}`;
+    }
+    return avatar;
+  }
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "U")}&background=e5e7eb&color=374151`;
 };
 
 export default function GoalList() {
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [hoverId, setHoverId] = useState<string | null>(null);
 
   const fetchGoals = async () => {
-    setLoading(true);
-    setErr(null);
     try {
       const res = await ApiClient.get("/goals");
-      const data = res.data?.data ?? res.data ?? [];
-      setGoals(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setErr(e?.response?.data?.message || "Failed to load goals");
+      setGoals(res.data?.data ?? res.data ?? []);
+    } catch (e) {
+      alert("Failed to load goals");
     } finally {
       setLoading(false);
     }
@@ -35,59 +36,128 @@ export default function GoalList() {
     fetchGoals();
   }, []);
 
-  // 🧠 Notion-style grouping
-  const notStarted = goals.filter(g => (g.progress ?? 0) === 0);
-  const inProgress = goals.filter(g => (g.progress ?? 0) > 0 && (g.progress ?? 0) < 100);
-  const done = goals.filter(g => (g.progress ?? 0) === 100);
+  const buckets = useMemo(() => {
+    const normalize = (v: any) => {
+      const n = typeof v === "number" ? v : 0;
+      if (n < 0) return 0;
+      if (n > 100) return 100;
+      return Math.round(n);
+    };
 
-  const renderGroup = (title: string, items: Goal[]) => {
-    if (items.length === 0) return null;
+    const getObjectIdTime = (id?: string) => {
+      if (!id || id.length < 8) return 0;
+      return parseInt(id.substring(0, 8), 16) * 1000;
+    };
 
+    const list = (goals || []).map(g => ({
+      ...g,
+      progress: normalize(g.progress),
+      __sortTime: g.createdAt ? new Date(g.createdAt).getTime() : getObjectIdTime(g._id),
+    }))
+    // newest first
+    .sort((a, b) => (b.__sortTime || 0) - (a.__sortTime || 0));
+
+    return {
+      notStarted: list.filter(g => (g.progress ?? 0) === 0),
+      inProgress: list.filter(g => (g.progress ?? 0) > 0 && (g.progress ?? 0) < 100),
+      completed: list.filter(g => (g.progress ?? 0) === 100),
+    };
+  }, [goals]);
+
+  if (loading) {
     return (
-      <div className="mb-5">
-        <h6 className="text-muted mb-3">{title}</h6>
+      <>
+        <AppNavbar />
+        <div className="text-center mt-5">
+          <Spinner />
+        </div>
+      </>
+    );
+  }
 
-        <Row className="gy-3">
-          {items.map(goal => (
-            <Col md={6} lg={4} key={goal._id}>
-              <Card
-                className="h-100"
+  const GoalCard = ({ g }: { g: any }) => {
+    const hovered = hoverId === g._id;
+    const progress = Math.round(g.progress || 0);
+    return (
+      <Col md={6} key={g._id}>
+        <div
+          role="button"
+          onClick={() => navigate(`/app/goals/${g._id}`)}
+          onMouseEnter={() => setHoverId(g._id)}
+          onMouseLeave={() => setHoverId(null)}
+          className="p-3"
+          style={{
+            backgroundColor: hovered ? "#ffffff" : "#ffffff",
+            border: `1px solid ${hovered ? "#c7d2fe" : "#e5e7eb"}`,
+            borderRadius: 8,
+            boxShadow: hovered ? "0 4px 14px rgba(99,102,241,0.15)" : "none",
+            transition: "all 160ms ease",
+          }}
+        >
+          <div className="d-flex justify-content-between align-items-start mb-2">
+            <div style={{ minWidth: 0 }}>
+              <div
+                className="fw-semibold"
                 style={{
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.06)",
-                  background: "#fff",
+                  fontSize: 16,
+                  color: "#111",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                <Card.Body className="d-flex flex-column">
-                  <div className="mb-2">
-                    <div style={{ fontWeight: 600 }}>{goal.title}</div>
-                    <small className="text-muted">
-                      Progress {goal.progress ?? 0}%
-                    </small>
-                  </div>
+                {g.title}
+              </div>
+              {g.description && (
+                <div
+                  className="text-muted"
+                  style={{
+                    fontSize: 13,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical" as any,
+                    overflow: "hidden",
+                  }}
+                >
+                  {g.description}
+                </div>
+              )}
+            </div>
+            <div className="d-flex align-items-center gap-1">
+              {(g.members || []).slice(0, 3).map((m: any, idx: number) => (
+                <Image
+                  key={idx}
+                  src={resolveAvatar(m.avatar, m.name || m.email)}
+                  roundedCircle
+                  width={24}
+                  height={24}
+                />
+              ))}
+            </div>
+          </div>
 
-                  <div
-                    className="text-muted small flex-grow-1"
-                    style={{ minHeight: 40 }}
-                  >
-                    {goal.description || "No description"}
-                  </div>
-
-                  <div className="mt-3">
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={() => navigate(`/app/goals/${goal._id}`)}
-                    >
-                      Open
-                    </Button>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </div>
+          {/* Custom progress bar (indigo) */}
+          <div
+            style={{
+              height: 8,
+              background: "#e5e7eb",
+              borderRadius: 9999,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${progress}%`,
+                height: "100%",
+                background: "#6366f1",
+              }}
+            />
+          </div>
+          <div className="mt-1" style={{ fontSize: 12, color: "#6b7280" }}>
+            {progress}% complete
+          </div>
+        </div>
+      </Col>
     );
   };
 
@@ -95,51 +165,85 @@ export default function GoalList() {
     <>
       <AppNavbar />
 
-      <Container className="mt-4 mb-5" style={{ maxWidth: 1100 }}>
-        {/* PAGE HEADER */}
-        <div className="d-flex justify-content-between align-items-center mb-5">
+      <Container className="mt-4 mb-5" style={{ maxWidth: 920 }}>
+        {/* Header */}
+        <div className="d-flex justify-content-between align-items-start mb-3">
           <div>
-            <h2 className="mb-1">Goals</h2>
-            <div className="text-muted small">
-              Track and manage your personal goals
-            </div>
+            <h2 className="fw-semibold mb-1" style={{ color: "#111" }}>Goals</h2>
+            <div className="text-muted" style={{ fontSize: 14 }}>Track progress and stay focused.</div>
           </div>
-
           <Button
-            variant="primary"
             onClick={() => navigate("/app/goals/add")}
+            style={{ backgroundColor: "#6366f1", borderColor: "#6366f1" }}
           >
-            + Add Goal
+            New goal
           </Button>
         </div>
 
-        {/* STATES */}
-        {loading && (
-          <div className="text-center my-5">
-            <Spinner animation="border" />
+        {/* Empty state */}
+        {goals.length === 0 ? (
+          <div className="text-center p-5" style={{ color: "#6b7280", fontSize: 14 }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+            <div className="mb-1">No goals yet.</div>
+            <div>Create your first goal to get started.</div>
+            <div className="mt-3">
+              <Button onClick={() => navigate("/app/goals/add")} style={{ backgroundColor: "#6366f1", borderColor: "#6366f1" }}>
+                New goal
+              </Button>
+            </div>
           </div>
-        )}
-
-        {err && <Alert variant="danger">{err}</Alert>}
-
-        {!loading && goals.length === 0 && (
-          <div className="text-center text-muted mt-5">
-            <h5>No goals yet</h5>
-            <p className="mb-3">
-              Start by creating your first goal.
-            </p>
-            <Button onClick={() => navigate("/app/goals/add")}>
-              + Add your first goal
-            </Button>
-          </div>
-        )}
-
-        {/* GROUPED CONTENT */}
-        {!loading && goals.length > 0 && (
+        ) : (
           <>
-            {renderGroup("Not started", notStarted)}
-            {renderGroup("In progress", inProgress)}
-            {renderGroup("Completed", done)}
+            {/* Not started */}
+            {buckets.notStarted.length > 0 && (
+              <div className="mb-4">
+                <div className="d-flex align-items-baseline justify-content-between mb-2">
+                  <div style={{ fontSize: 12, color: "#111", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600 }}>
+                    🚀 Not started
+                  </div>
+                  <div className="text-muted small">{buckets.notStarted.length}</div>
+                </div>
+                <Row className="g-3">
+                  {buckets.notStarted.map((g: any) => (
+                    <GoalCard key={g._id} g={g} />
+                  ))}
+                </Row>
+              </div>
+            )}
+
+            {/* In progress */}
+            {buckets.inProgress.length > 0 && (
+              <div className="mb-4">
+                <div className="d-flex align-items-baseline justify-content-between mb-2">
+                  <div style={{ fontSize: 12, color: "#111", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600 }}>
+                    ⚡ In progress
+                  </div>
+                  <div className="text-muted small">{buckets.inProgress.length}</div>
+                </div>
+                <Row className="g-3">
+                  {buckets.inProgress.map((g: any) => (
+                    <GoalCard key={g._id} g={g} />
+                  ))}
+                </Row>
+              </div>
+            )}
+
+            {/* Completed */}
+            {buckets.completed.length > 0 && (
+              <div className="mb-4">
+                <div className="d-flex align-items-baseline justify-content-between mb-2">
+                  <div style={{ fontSize: 12, color: "#111", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600 }}>
+                    ✅ Completed
+                  </div>
+                  <div className="text-muted small">{buckets.completed.length}</div>
+                </div>
+                <Row className="g-3">
+                  {buckets.completed.map((g: any) => (
+                    <GoalCard key={g._id} g={g} />
+                  ))}
+                </Row>
+              </div>
+            )}
           </>
         )}
       </Container>
